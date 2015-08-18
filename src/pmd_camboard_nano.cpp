@@ -135,7 +135,7 @@ sensor_msgs::CameraInfoPtr PMDCamboardNano::getCameraInfo()
   {
     // These numbers come from a forum post at www.cayim.com
     // https://www.cayim.com/forum/index.php?/topic/33-intrinsics-and-calibration/#entry125
-    // Seems like most (all?) cameras are shipped with these calibration parameters.
+    // All PMD Camboard nano devices are pre-calibrated and shipped ready for use
     info->D[0] = -0.222609;
     info->D[1] = 0.063022;
     info->D[2] = 0.002865;

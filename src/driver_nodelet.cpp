@@ -223,5 +223,5 @@ private:
 
 // Register as a nodelet
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS (pmd_camboard_nano, driver, pmd_camboard_nano::DriverNodelet, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS (pmd_camboard_nano, driver, pmd_camboard_nano::DriverNodelet, nodelet::Nodelet)
 

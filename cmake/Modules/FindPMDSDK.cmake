@@ -18,7 +18,8 @@
 #  PMDSDK_INCLUDE_DIR        The location of PMDSDK headers
 
 find_path(PMDSDK_ROOT_DIR
-    NAMES include/pmdsdk2.h
+#    NAMES include/pmdsdk2.h
+     NAMES PMDSDK
 )
 
 find_library(PMDSDK_LIBRARIES
