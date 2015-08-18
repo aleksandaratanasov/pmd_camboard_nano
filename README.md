@@ -29,6 +29,16 @@ globally in `/usr/local/pmd`, or systemwide defined by an environment variable
 You also need to copy the file `10-pmd.rules` provided with the SDK to
 `/etc/udev/rules.d` to allow normal users to open the camera.
 
+**EDIT:** With my CMakeLists.txt simply create the PMDSDK directory in the root
+of the package with the subdirectories *include*, *lib* and *plugins*:
+
+* **PMDSDK/include**: here you copy *pmddatadescription.h*, *pmdsdk2.h* and *pmdsdk2common.h*
+
+* **PMDSDK/lib**: here you copy *libpmdaccess2.so*
+
+* **PMDSDK/plugins**: here you copy *camboardnano.L64.pap* and *camboardnanoproc.L64.ppp*
+
+
 Package installation
 --------------------
 
@@ -180,6 +190,7 @@ one Lenovo laptop the following problems were observed:
 * RViz crashed when trying to display the messages in the `/camera/points`
   topic.
   Workaround: set display style **NOT** to Points, e.g. to BillboardSpheres.
+  **EDIT:** Works fine with my setup
 
 * While adjusting the parameters with dynamic reconfigure GUI the driver nodelet
   freezed and sometimes even died.
