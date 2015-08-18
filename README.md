@@ -195,6 +195,12 @@ one Lenovo laptop the following problems were observed:
 * While adjusting the parameters with dynamic reconfigure GUI the driver nodelet
   freezed and sometimes even died.
 
+* In case of a crash it is very possible for the camera device to become unavailable.
+  This is due to the poorly written official drive, which utterly fails to handle such
+  situations. If pmdClose() is not called (which happens in case of a crash) the above
+  described situation occurs.
+  Workaround: detach and reattach the device, and then restart the pmd_camboard_nano_node
+
 [ROS]: http://www.ros.org
 [PMD]: http://www.pmdtec.com/products_services/reference_design.php
 [openni_launch]: http://ros.org/wiki/openni_launch
