@@ -196,8 +196,8 @@ one Lenovo laptop the following problems were observed:
   freezed and sometimes even died.
 
 * In case of a crash it is very possible for the camera device to become unavailable.
-  This is due to the poorly written official drive, which utterly fails to handle such
-  situations. If pmdClose() is not called (which happens in case of a crash) the above
+  This is due to the poorly written official driver, which utterly fails to handle such
+  situations. If pmdClose() is not called (which happens in a case of a crash) the above
   described situation occurs.
   Workaround: detach and reattach the device, and then restart the pmd_camboard_nano_node
 

@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
 <package>
   <name>pmd_camboard_nano</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>ROS driver for PMD[vision]® CamBoard nano depth sensor.</description>
   <license>MIT</license>
   <maintainer email="alexandrov88@gmail.com">Sergey Alexandrov</maintainer>
+  <maintainer email="redbaronqueen@gmail.com">Aleksandar Vladimirov Atanasov</maintainer>
   <author email="alexandrov88@gmail.com">Sergey Alexandrov</author>
+  <author email="redbaronqueen@gmail.com">Aleksandar Vladimirov Atanasov</author>
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>

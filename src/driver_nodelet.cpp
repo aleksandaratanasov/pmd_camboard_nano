@@ -73,7 +73,7 @@ private:
     pn.param<std::string>("frame_id", frame_id_, "/camera_optical_frame");
     pn.param<std::string>("device_serial", device_serial, "");
     pn.param<double>("open_camera_retry_period", open_camera_retry_period, 3);
-    pn.param<double>("update_rate", update_rate, 30);
+    pn.param<double>("update_rate", update_rate, 40);
     pn.param<bool>("flip_vertical", flip_vertical, true);
 
     // Open camera

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pmd_camboard_nano)
 
+#set(CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}") # Congrats! No C++11 :-/ http://stackoverflow.com/questions/32119437/weird-segmentation-fault-after-converting-a-ros-pointcloud2-message-to-pcl-point/32120491#32120491
+
 find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs image_transport nodelet dynamic_reconfigure tf)
 
 generate_dynamic_reconfigure_options(cfg/PMD.cfg)
@@ -20,7 +22,11 @@ find_package(PMDSDK REQUIRED)
 # Register Boost
 find_package(Boost REQUIRED COMPONENTS system)
 # Register PCL
-find_package(PCL REQUIRED)
+find_package(PCL 1.7 REQUIRED COMPONENTS common io filters)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 #########
 # BUILD #
@@ -40,6 +46,15 @@ target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${PMDSDK_LIBRARIE
 add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-link_directories(${PCL_LIBRARY_DIRS})
+
+# The cloud handler receives point clouds either directly from the PMD publishing node (directly controlling
+# the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
 add_executable(${PROJECT_NAME}_cloud_handler src/pmd_camboard_nano_cloud_handler)
-target_link_libraries(${PROJECT_NAME}_cloud_handler ${catkin_LIBRARIES} boost_system pthread)
+target_link_libraries(${PROJECT_NAME}_cloud_handler ${catkin_LIBRARIES} boost_system pthread pcl_common pcl_io pcl_filters)
+
+# TODO
+# The cloud relay receives the output from the cloud publishing node (directly controlling the PMD device)
+# and re-publish it ONLY when the user triggers it. This is basically used to reduce the amount of data
+# and also to regulate which point clouds are passed onto the cloud handler
+add_executable(${PROJECT_NAME}_cloud_relay src/pmd_camboard_nano_cloud_relay)
+target_link_libraries(${PROJECT_NAME}_cloud_relay ${catkin_LIBRARIES} boost_system pthread pcl_common pcl_io pcl_filters)
