@@ -22,7 +22,7 @@ find_package(PMDSDK REQUIRED)
 # Register Boost
 find_package(Boost REQUIRED COMPONENTS system)
 # Register PCL
-find_package(PCL 1.7 REQUIRED COMPONENTS common io filters)
+find_package(PCL 1.7 REQUIRED COMPONENTS common io filters kdtree surface)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
@@ -47,14 +47,18 @@ add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
+# TODO
+# Create a pipeline consisting of nodes for each processing step
+# Each node takes a point cloud message, processes it and then publishes the results
+# This will allow a very dynamic coupling between the processess working on the data from the PMD device
+# and will allow testing various combinations in order to achieve as good results as possible
+
 # The cloud handler receives point clouds either directly from the PMD publishing node (directly controlling
 # the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
-add_executable(${PROJECT_NAME}_cloud_handler src/pmd_camboard_nano_cloud_handler)
-target_link_libraries(${PROJECT_NAME}_cloud_handler ${catkin_LIBRARIES} boost_system pthread pcl_common pcl_io pcl_filters)
+add_executable(${PROJECT_NAME}_cloud_statistical_outlier_removal src/pmd_camboard_nano_cloud_statistical_outlier_removal)
+target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${catkin_LIBRARIES} boost_system pthread)
+target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVE USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
 
-# TODO
-# The cloud relay receives the output from the cloud publishing node (directly controlling the PMD device)
-# and re-publish it ONLY when the user triggers it. This is basically used to reduce the amount of data
-# and also to regulate which point clouds are passed onto the cloud handler
-add_executable(${PROJECT_NAME}_cloud_relay src/pmd_camboard_nano_cloud_relay)
-target_link_libraries(${PROJECT_NAME}_cloud_relay ${catkin_LIBRARIES} boost_system pthread pcl_common pcl_io pcl_filters)
+add_executable(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation src/pmd_camboard_nano_cloud_surface_smoothing_normal_estimation)
+target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
+target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVE USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
