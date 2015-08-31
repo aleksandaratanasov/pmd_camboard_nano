@@ -26,7 +26,7 @@ globally in `/usr/local/pmd`, or systemwide defined by an environment variable
 `PMDDIR`. You can also change the search folder by modifying the
 `PMDSDK_ROOT_DIR` variable in `CMakeLists.txt` file.
 
-You also need to copy the file `10-pmd.rules` provided with the SDK to
+You also need to copy the file `10-pmd-ubuntu.rules` provided with the SDK to
 `/etc/udev/rules.d` to allow normal users to open the camera.
 
 **EDIT:** With my CMakeLists.txt simply create the PMDSDK directory in the root
