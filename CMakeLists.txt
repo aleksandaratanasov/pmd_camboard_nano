@@ -57,8 +57,8 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 # the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
 add_executable(${PROJECT_NAME}_cloud_statistical_outlier_removal src/pmd_camboard_nano_cloud_statistical_outlier_removal)
 target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${catkin_LIBRARIES} boost_system pthread)
-target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVE USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
+target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
 
 add_executable(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation src/pmd_camboard_nano_cloud_surface_smoothing_normal_estimation)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
-target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVE USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
+target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)

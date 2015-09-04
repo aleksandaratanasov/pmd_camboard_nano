@@ -1,3 +1,25 @@
+/******************************************************************************
+ * Copyright (c) 2015 Aleksandar Vladimirov Atanasov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ ******************************************************************************/
 // ROS
 // ROS - Misc
 #include <ros/ros.h>
@@ -38,11 +60,10 @@ private:
 
 public:
   CloudSubscriberSOR(std::string topicIn, std::string topicOut)
-    : fileIdx(0),
-      //fileSmoothSurfOutputIdx(0),
-      toggleWritingToFile(false),
-      meanK(50),
-      stdDevMulThresh(1.0)
+    : fileIdx(0)
+      //toggleWritingToFile(false),
+      //meanK(50),
+      //stdDevMulThresh(1.0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudSubscriberSOR::subCallback, this);
     pub.advertise(nh, topicOut, 1);
@@ -110,6 +131,7 @@ public:
       std::string path = "/home/latadmin/catkin_ws/devel/lib/pmd_camboard_nano/";
       ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *pclCloud_filtered);
+      ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
     }
@@ -124,17 +146,20 @@ int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_statistical_outlier_removal");
   ros::NodeHandle nh;
-  std::string topicIn = "/camera/points";
-  std::string topicOut = "/camera/cloud_statistical_outlier_removal";
-  bool toggleWriteToFile = false;
-  int meanK = 50;
-  double stdDevMulThresh = 1.0;
+  std::string topicIn = "";// = "/camera/points";
+  std::string topicOut = "";// = "/camera/cloud_statistical_outlier_removal";
+  bool toggleWriteToFile; // = false;
+  int meanK; // = 50;
+  double stdDevMulThresh; // = 1.0;
 
   nh.param("topicIn", topicIn);
   nh.param("topicOut", topicOut);
-  nh.param("write_to_file", toggleWriteToFile);
-  nh.param("meanK", meanK);
-  nh.param("stdDevMulThresh", stdDevMulThresh);
+  nh.param("write_to_file", toggleWriteToFile, false);
+  nh.param("meanK", meanK, 50);
+  nh.param("stdDevMulThresh", stdDevMulThresh, 1.0);
+
+  ROS_INFO("Subscribed to \"%s\"", topicIn.c_str());
+  ROS_INFO("Publishing to \"%s\"", topicOut.c_str());
 
   CloudSubscriberSOR c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
