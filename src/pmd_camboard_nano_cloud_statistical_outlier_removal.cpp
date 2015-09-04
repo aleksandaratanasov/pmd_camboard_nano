@@ -145,15 +145,15 @@ public:
 int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_statistical_outlier_removal");
-  ros::NodeHandle nh;
-  std::string topicIn = "";// = "/camera/points";
-  std::string topicOut = "";// = "/camera/cloud_statistical_outlier_removal";
-  bool toggleWriteToFile; // = false;
-  int meanK; // = 50;
-  double stdDevMulThresh; // = 1.0;
+  ros::NodeHandle nh("~");
+  std::string topicIn = "/camera/points";
+  std::string topicOut = "points_sor";
+  bool toggleWriteToFile;
+  int meanK;
+  double stdDevMulThresh;
 
-  nh.param("topicIn", topicIn);
-  nh.param("topicOut", topicOut);
+  //nh.param("topicIn", topicIn);
+  //nh.param("topicOut", topicOut);
   nh.param("write_to_file", toggleWriteToFile, false);
   nh.param("meanK", meanK, 50);
   nh.param("stdDevMulThresh", stdDevMulThresh, 1.0);

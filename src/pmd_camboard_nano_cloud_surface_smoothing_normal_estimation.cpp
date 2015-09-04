@@ -156,18 +156,18 @@ public:
 int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_surface_smoothing_normal_estimation");
-  ros::NodeHandle nh;
-  std::string topicIn = "/camera/cloud_statistical_outlier_removal";
-  std::string topicOut = "/camera/cloud_surface_smoothing_normal_estimation";
-  bool toggleWriteToFile = false;
-  bool polynomialFit = false;
-  double searchRadius = 0.03;
+  ros::NodeHandle nh("~");
+  std::string topicIn = "points_sor";
+  std::string topicOut = "points_ssne";
+  bool toggleWriteToFile;
+  bool polynomialFit;
+  double searchRadius;
 
-  nh.param("subscribeTo", topicIn);
-  nh.param("publish", topicOut);
-  nh.param("write_to_file", toggleWriteToFile);
-  nh.param("polynomialFit", polynomialFit);
-  nh.param("searchRadius", searchRadius);
+  //nh.param("subscribeTo", topicIn);
+  //nh.param("publish", topicOut);
+  nh.param("write_to_file", toggleWriteToFile, false);
+  nh.param("polynomialFit", polynomialFit, false);
+  nh.param("searchRadius", searchRadius, 0.03);
 
   CloudSubscriberSSNE c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
