@@ -139,6 +139,25 @@ Use the [dynamic_reconfigure][] package to update these parameters in runtime:
   activate enhanced bilateral filtering (increases robustness against motion
   blur)
 
+PCL
+===
+Installation
+------------------
+The project requires B-splines and NURBS which are not included in the
+upstream PCL 1.7.1. You have to build it from source if you want to generate
+meshes from the point clouds
+
+Download the sources from https://github.com/PointCloudLibrary/pcl/releases/tag/pcl-1.7.1
+
+Make sure you enable “BUILD_surface_on_nurbs” in your ccmake configuration,
+by setting it to ON. If your license permits, also enable “USE_UMFPACK” for
+sparse linear solving. This requires SuiteSparse (libsuitesparse-dev in Ubuntu)
+which is faster, allows more degrees of freedom (i.e. control points) and
+more data points. The program created during this tutorial is available in
+pcl/examples/surface/example_nurbs_fitting_surface.cpp and is built when
+“BUILD_examples” is set to ON. This will create the binary called
+pcl_example_nurbs_fitting_surface in your bin folder.
+
 Misc
 ====
 

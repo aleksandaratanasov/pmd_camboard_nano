@@ -23,10 +23,15 @@ find_package(PMDSDK REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 # Register PCL
 find_package(PCL 1.7 REQUIRED COMPONENTS common io filters kdtree surface)
+# Eigen
+find_package(cmake_modules REQUIRED) # Required for Eigen
+find_package(Eigen REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+
+include_directories(include ${Eigen_INCLUDE_DIRS})
 
 #########
 # BUILD #
@@ -62,3 +67,7 @@ target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LI
 add_executable(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation src/pmd_camboard_nano_cloud_surface_smoothing_normal_estimation)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
+
+add_executable(${PROJECT_NAME}_cloud_nurbs_bspline_fitting src/pmd_camboard_nano_cloud_nurbs_bspline_fitting)
+target_link_libraries(${PROJECT_NAME}_cloud_nurbs_bspline_fitting ${catkin_LIBRARIES} boost_system pthread)
+target_link_libraries(${PROJECT_NAME}_cloud_nurbs_bspline_fitting ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)

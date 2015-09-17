@@ -1,0 +1,8 @@
+NAMESPACES:
+  - nodes directly related to the PMD Camboard device are by default part of the "camera" namespace
+  - nodes processing the data produced by the PMD Camboard device are by default part of the "processing" namespace
+  
+TEMPLATES:
+Note: All templates offer the bare minimum that I think is required for a node part of this project. They can easily be extended with additional functionality based on the specific task at hand
+  - pmd_camboard_nano_cloud_template.cpp - node that subscribes to a ros::std_msgs::PointCloud2 message, processes it and then publishes the result again as a ros::std_msgs::PointCloud2 message
+  - pmd_camboard_nano_cloud_template.launch - launch file for the above mentioned node
