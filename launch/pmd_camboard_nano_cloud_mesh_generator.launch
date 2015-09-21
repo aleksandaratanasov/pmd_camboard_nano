@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="processing" default="processing"/>
+  <group ns="$(arg processing)">
+
+    <!-- Cloud handler -->
+    <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_mesh_generator" name="cloud_mesh_generator">
+          <param name="write_to_file" type="bool" value="true"/>
+    </node>
+  </group>
+</launch>
