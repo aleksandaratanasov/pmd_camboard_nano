@@ -22,7 +22,7 @@ find_package(PMDSDK REQUIRED)
 # Register Boost
 find_package(Boost REQUIRED COMPONENTS system)
 # Register PCL
-find_package(PCL 1.7 REQUIRED COMPONENTS common io filters kdtree surface)
+find_package(PCL 1.7 REQUIRED COMPONENTS common io filters kdtree surface features)
 # Eigen
 find_package(cmake_modules REQUIRED) # Required for Eigen
 find_package(Eigen REQUIRED)
@@ -30,15 +30,14 @@ find_package(Eigen REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
-
 include_directories(include ${Eigen_INCLUDE_DIRS})
+add_definitions(-DPMD_PLUGIN_DIR="${PMDSDK_PLUGIN_DIR}/")
+include_directories(include ${PCL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${PMDSDK_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+
 
 #########
 # BUILD #
 #########
-add_definitions(-DPMD_PLUGIN_DIR="${PMDSDK_PLUGIN_DIR}/")
-include_directories(include ${catkin_INCLUDE_DIRS} ${PMDSDK_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-
 # Make sure configure headers are built before any node using them
 message("Setting up binaries for driver node and nodlet")
 add_library(${PROJECT_NAME}_nodelet src/driver_nodelet.cpp src/pmd_camboard_nano.cpp)

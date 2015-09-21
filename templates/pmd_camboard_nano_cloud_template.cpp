@@ -106,7 +106,8 @@ public:
     // Optional: write result to a binary compressed PCD file
     if(toggleWritingToFile)
     {
-      std::string path = "/home/latadmin/catkin_ws/devel/lib/pmd_camboard_nano/";
+      //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
+      std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
       ss << path << "cloud_template_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
       fileIdx++;
@@ -125,8 +126,8 @@ int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_template");
   ros::NodeHandle nh("~");
-  std::string topicIn = "points_sor";
-  std::string topicOut = "points_ssne";
+  std::string topicIn = "/camera/points"; //The "raw" output from the PMD camera (raw means unfiltered)
+  std::string topicOut = "points_template";
   // ...
 
   nh.param("write_to_file", toggleWriteToFile, false);

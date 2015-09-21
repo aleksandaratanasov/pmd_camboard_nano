@@ -106,7 +106,7 @@ public:
     pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
     // Source: http://robotica.unileon.es/mediawiki/index.php/PCL/OpenNI_tutorial_2:_Cloud_processing_%28basic%29#Removing_NaNs
-    // Removing NaN points from cloud (if those are not remove the KD-Tree and MLS will fail
+    // Removing NaN points from cloud (if those are not remove the KD-Tree and MLS will fail)
     std::vector<int> mapping; //
     pcl::removeNaNFromPointCloud(*p, *p, mapping);
 
@@ -119,6 +119,9 @@ public:
       fileIdx++;
       ss.str("");
     }
+
+    // TODO See if this node can be split into two - one for the normal estimation and another for the surface smoothing
+    // The mesh generator node requires similar way of computing the normals so maybe there is a chance to make this process more flexible
     // Source: http://pointclouds.org/documentation/tutorials/resampling.php
     // Estimate normals and apply smoothing at the end before the mesh generation
     // Creating the KD-tree
