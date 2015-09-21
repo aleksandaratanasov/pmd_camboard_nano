@@ -61,11 +61,11 @@ private:
 
 public:
   CloudProcessingnodeSSNE(std::string topicIn, std::string topicOut)
-    : fileIdx(0),
+    : fileIdx(0)
       //fileSmoothSurfOutputIdx(0),
-      toggleWritingToFile(false),
-      polynomialFit(false),
-      searchRadius(0.03)
+      //toggleWritingToFile(false),
+      //polynomialFit(false),
+      //searchRadius(0.03)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingnodeSSNE::subCallback, this);
     pub.advertise(nh, topicOut, 1);

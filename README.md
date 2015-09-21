@@ -143,21 +143,36 @@ PCL
 ===
 Installation
 ------------------
-The project requires B-splines and NURBS which are not included in the
-upstream PCL 1.7.1. You have to build it from source if you want to generate
-meshes from the point clouds
+The mesh generation node is build with NURBS B-Spline support, it requires the 
+**on_nurbs** module which are not included in the upstream PCL 1.7.2 due its 
+experimental nature. You have to build it PCL from source if you want to generate 
+meshes from the point clouds using NURBS.
 
-Download the sources from https://github.com/PointCloudLibrary/pcl/releases/tag/pcl-1.7.1
+ 1. Clone PCL from github. It is advisable to use as closer version to the one 
+ provided as upstream package and used by ROS as possible. On my system (Debian
+ Jessie) it is [PCL 1.7.2](https://github.com/PointCloudLibrary/pcl/releases/tag/pcl-1.7.2)
 
-Make sure you enable “BUILD_surface_on_nurbs” in your ccmake configuration,
-by setting it to ON. If your license permits, also enable “USE_UMFPACK” for
-sparse linear solving. This requires SuiteSparse (libsuitesparse-dev in Ubuntu)
-which is faster, allows more degrees of freedom (i.e. control points) and
-more data points. The program created during this tutorial is available in
-pcl/examples/surface/example_nurbs_fitting_surface.cpp and is built when
-“BUILD_examples” is set to ON. This will create the binary called
-pcl_example_nurbs_fitting_surface in your bin folder.
-
+ 2. Create a build folder inside the root folder of the source folder and execute
+ `cmake ..` or `cmake-gui ..`. Make sure you set the “BUILD_surface_on_nurbs” flag.
+ If your license permits, also enable “USE_UMFPACK” for sparse linear solving. This 
+ requires SuiteSparse (libsuitesparse-dev in Debian-derived distros) which is faster, 
+ allows more degrees of freedom (i.e. control points) and more data points. Leave the CMAKE_INSTALL_PATH
+ to its default value `/usr/local`
+ 
+ 3. Build the sources using `make` inside the build folder
+ 4. Use `sudo make install` or `sudo checkinstall make install` to install the new version.
+ I recommend the second since it allows you uninstall the custom build much easier using `dpkg`
+ instead of hunting down all the files (the case when using `make install` only)
+ 5.(Optional but recommended) I strongly recommend removing the uninstall PCL from upstream and
+ use only the custom build. It is also better to rebuild the PCL-related ROS packages. This part 
+ at least on my machine made me cry so be advised! The recommendation comes from the fact that 
+ mixing different versions of the same library might give you severe headaches later on. The 
+ easiest way to do that is by removing the PCL-related ROS packages, download the required sources 
+ in a catkin workspace (see the ROS wiki to hunt down all those packages), build and install.
+ 
+If NURBS is not enabled the mesh generator will use fast triangulation, which is faster but results
+in a mesh of lower quality.
+ 
 Misc
 ====
 

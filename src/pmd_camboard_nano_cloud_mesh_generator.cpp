@@ -33,13 +33,24 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-// PCL - For the NURBS surface fitting and mesh generation
+// PCL - Mesh generation
+#ifdef BUILD_WITH_NURBS
+  // Use NURBS
+  #include <pcl/surface/on_nurbs/fitting_surface_tdm.h>
+  #include <pcl/surface/on_nurbs/fitting_curve_2d_asdm.h>
+  #include <pcl/surface/on_nurbs/triangulation.h>
+#else
+  // Use fast triangulation
+  #include <pcl/kdtree/kdtree_flann.h>
+  #include <pcl/features/normal_3d.h>
+  #include <pcl/surface/gp3.h>
+#endif
 
 // Misc
 #include <sstream>
 #include <string>
 
-class CloudProcessingnodeNBSF
+class CloudProcessingnodeMG
 {
 protected:
   ros::NodeHandle nh;
@@ -55,15 +66,14 @@ private:
   bool toggleWritingToFile;
 
 public:
-  CloudProcessingnodeNBSF(std::string topicIn, std::string topicOut)
-    : fileIdx(0),
-      toggleWritingToFile(false)
+  CloudProcessingnodeMG(std::string topicIn, std::string topicOut)
+    : fileIdx(0)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingnodeNBSF::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingnodeMG::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingnodeNBSF()
+  ~CloudProcessingnodeMG()
   {
     sub.shutdown();
   }
@@ -97,7 +107,7 @@ public:
     if(toggleWritingToFile)
     {
       std::string path = "/home/latadmin/catkin_ws/devel/lib/pmd_camboard_nano/";
-      ss << path << "cloud_smooth_surface_" << fileIdx << ".pcd";
+      ss << path << "cloud_mesh_generator_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
@@ -112,19 +122,15 @@ public:
 
 int main(int argc, char* argv[])
 {
-  ros::init (argc, argv, "cloud_nurbs_bspline_fitting");
+  ros::init (argc, argv, "cloud_mesh_generator");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_ssne";
-  std::string topicOut = "points_nbsf";
+  std::string topicOut = "points_mg";
   bool toggleWriteToFile;
-  //bool polynomialFit;
 
-  //nh.param("subscribeTo", topicIn);
-  //nh.param("publish", topicOut);
   nh.param("write_to_file", toggleWriteToFile, false);
-  //nh.param("polynomialFit", polynomialFit, false);
 
-  CloudProcessingnodeNBSF c(topicIn, topicOut);
+  CloudProcessingnodeMG c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
   c.setWritingToFile(toggleWriteToFile);
   //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);

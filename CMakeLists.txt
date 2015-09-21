@@ -39,9 +39,8 @@ include_directories(include ${Eigen_INCLUDE_DIRS})
 add_definitions(-DPMD_PLUGIN_DIR="${PMDSDK_PLUGIN_DIR}/")
 include_directories(include ${catkin_INCLUDE_DIRS} ${PMDSDK_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
-# make sure configure headers are built before any node using them
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-message(${CATKIN_DEVEL_PREFIX})
+# Make sure configure headers are built before any node using them
+message("Setting up binaries for driver node and nodlet")
 add_library(${PROJECT_NAME}_nodelet src/driver_nodelet.cpp src/pmd_camboard_nano.cpp)
 target_link_libraries(${PROJECT_NAME}_nodelet ${catkin_LIBRARIES} ${PMDSDK_LIBRARIES})
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_gencfg)
@@ -51,23 +50,34 @@ target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${PMDSDK_LIBRARIE
 add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-
-# TODO
-# Create a pipeline consisting of nodes for each processing step
-# Each node takes a point cloud message, processes it and then publishes the results
-# This will allow a very dynamic coupling between the processess working on the data from the PMD device
-# and will allow testing various combinations in order to achieve as good results as possible
+# Following nodes are part of the processing pipeline. Each node takes a point cloud message,
+# processes it and then publishes the results to the ROS network. This allows a very dynamic
+# coupling between the processess working on the data from the PMD device and allows testing
+# various combinations in order to achieve as good results as possible
 
 # The cloud handler receives point clouds either directly from the PMD publishing node (directly controlling
 # the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
+message("Setting up binary for statistical outlier removal node")
 add_executable(${PROJECT_NAME}_cloud_statistical_outlier_removal src/pmd_camboard_nano_cloud_statistical_outlier_removal)
 target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${catkin_LIBRARIES} boost_system pthread)
 target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
 
+message("Setting up binary for surface smoothing and normal estimation node")
 add_executable(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation src/pmd_camboard_nano_cloud_surface_smoothing_normal_estimation)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
 
-add_executable(${PROJECT_NAME}_cloud_nurbs_bspline_fitting src/pmd_camboard_nano_cloud_nurbs_bspline_fitting)
-target_link_libraries(${PROJECT_NAME}_cloud_nurbs_bspline_fitting ${catkin_LIBRARIES} boost_system pthread)
-target_link_libraries(${PROJECT_NAME}_cloud_nurbs_bspline_fitting ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
+# Due to the pretty tedious way of including a custom build PCL version alongside the upstream one that is used by
+# ROS by default and the experimental nature of the on_nurbs module building the NURBS node is optional
+option(BUILD_WITH_NURBS "Build NURBS fitting for mesh generation (requires on_nurbs module)" OFF)
+if(BUILD_WITH_NURBS)
+  message("Setting up binary for mesh generation node")
+  add_definitions(BUILD_WITH_NURBS)
+#endif()
+#if(NOT BUILD_WITH_NURBS)
+else()
+  message("NURBS bspline fitting disabled for mesh generation node. Setting up binary for mesh generation node with fast triangulation instead")
+endif()
+add_executable(${PROJECT_NAME}_cloud_mesh_generator src/pmd_camboard_nano_cloud_mesh_generator)
+target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator ${catkin_LIBRARIES} boost_system pthread)
+target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
