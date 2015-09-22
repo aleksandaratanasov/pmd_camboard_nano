@@ -65,7 +65,7 @@ message("Setting up binary for normal estimation")
 option(NORMALS_WITH_OPENMP "Enable OpenMP for estimating the normals of a point cloud" OFF)
 if(NORMALS_WITH_OPENMP)
   message("OpenMP enabled")
-  add_definitions(ENABLE_OPENMP)
+  add_definitions(-DENABLE_OPENMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 add_executable(${PROJECT_NAME}_cloud_normal_estimation src/pmd_camboard_nano_cloud_normal_estimation)
@@ -83,7 +83,7 @@ target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation 
 # TODO one mesh generation procedure per node
 option(BUILD_WITH_NURBS "Build mesh generator with NURBS B-spline fitting (requires on_nurbs module)" OFF)
 option(BUILD_WITH_FAST_TRIANGULATION "Build mesh generator with fast triangulation" ON)
-option(BUILD_WITH_POISSON_SURFACE_RECONSTRUCTION "Build mesh generator with Poisson surface reconstruction" ON)
+option(BUILD_WITH_POISSON "Build mesh generator with Poisson surface reconstruction" ON)
 
 # Processing node: NURBS B-spline fitting (mesh generator)
 # Due to the pretty tedious way of including a custom build PCL version alongside the upstream one that is used by
@@ -105,7 +105,7 @@ if(BUILD_WITH_FAST_TRIANGULATION)
 endif()
 
 # Processing node: Poisson surface reconstruction (mesh generator)
-if(BUILD_WITH_POISSON_SURFACE_RECONSTRUCTION)
+if(BUILD_WITH_POISSON)
   message("Setting up binary for mesh generator node with Poisson surface reconstruction")
   message("Warning: creates water-tight meshes")
   add_executable(${PROJECT_NAME}_cloud_mesh_generator_poisson src/pmd_camboard_nano_cloud_mesh_generator_poisson)
