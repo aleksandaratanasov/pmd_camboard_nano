@@ -40,7 +40,7 @@
 #include <sstream>
 #include <string>
 
-class CloudProcessingnodeSOR
+class CloudProcessingNodeSOR
 {
 protected:
   ros::NodeHandle nh;
@@ -58,17 +58,17 @@ private:
   double stdDevMulThresh; // standard deviation multiplier for the distance threshold calculation
 
 public:
-  CloudProcessingnodeSOR(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeSOR(std::string topicIn, std::string topicOut)
     : fileIdx(0)
       //toggleWritingToFile(false),
       //meanK(50),
       //stdDevMulThresh(1.0)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingnodeSOR::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeSOR::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingnodeSOR()
+  ~CloudProcessingNodeSOR()
   {
     sub.shutdown();
   }
@@ -127,7 +127,7 @@ public:
     // Optional: write filtered cloud to a binary compressed PCD
     if(toggleWritingToFile)
     {
-      std::string path = "/home/latadmin/catkin_ws/devel/lib/pmd_camboard_nano/";
+      std::string path = "";
       ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *pclCloud_filtered);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
   ROS_INFO("Subscribed to \"%s\"", topicIn.c_str());
   ROS_INFO("Publishing to \"%s\"", topicOut.c_str());
 
-  CloudProcessingnodeSOR c(topicIn, topicOut);
+  CloudProcessingNodeSOR c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
   c.setWritingToFile(toggleWriteToFile);
   ROS_INFO_STREAM("Setting mean K to " << meanK << " and standard deviation multipler threshold to " << stdDevMulThresh);

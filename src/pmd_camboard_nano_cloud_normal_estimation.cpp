@@ -34,15 +34,21 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - For the normals estimation and surface smoothing
-#include <pcl/filters/filter.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/surface/mls.h>
+#ifdef ENABLE_OPENMP
+  #include <pcl/features/normal_3d_omp.h>
+#else
+  #include <pcl/features/normal_3d.h>
+#endif
 
 // Misc
 #include <sstream>
 #include <string>
 
-class CloudProcessingNodeSSNE
+// TODO Change this to produce a cloud with normals (nothing more!)
+// Source: http://pointclouds.org/documentation/tutorials/normal_estimation.php
+// Use pcl::NormalEstimationOMP()
+
+class CloudProcessingNodeNE
 {
 protected:
   ros::NodeHandle nh;
@@ -56,33 +62,23 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
-  bool polynomialFit; // polynomial fit value is true if the surface and normal are approximated using a polynomial
   double searchRadius; // sphere radius that is to be used for determining the k-nearest neighbors used for fitting
 
 public:
-  CloudProcessingNodeSSNE(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeNE(std::string topicIn, std::string topicOut)
     : fileIdx(0)
-      //fileSmoothSurfOutputIdx(0),
-      //toggleWritingToFile(false),
-      //polynomialFit(false),
-      //searchRadius(0.03)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeSSNE::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeNE::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingNodeSSNE()
+  ~CloudProcessingNodeNE()
   {
     sub.shutdown();
   }
 
   void setWritingToFile(bool _toggle) {
     toggleWritingToFile = _toggle;
-  }
-
-  void setPolynomialFit(bool _polynomialFit)
-  {
-    polynomialFit = _polynomialFit;
   }
 
   void setSearchRadius(double _searchRadius)
@@ -105,41 +101,35 @@ public:
     pcl::fromROSMsg(*msg, pclCloud);
     pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
-    // Source: http://robotica.unileon.es/mediawiki/index.php/PCL/OpenNI_tutorial_2:_Cloud_processing_%28basic%29#Removing_NaNs
-    // Removing NaN points from cloud (if those are not remove the KD-Tree and MLS will fail)
-    std::vector<int> mapping; //
-    pcl::removeNaNFromPointCloud(*p, *p, mapping);
+    // Source: http://pointclouds.org/documentation/tutorials/normal_estimation.php
+    // Create the normal estimation class, and pass the input dataset to it
+#ifdef ENABLE_OPENMP
+    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+#else
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+#endif
+    ne.setInputCloud(p);
 
-    // Optional: write filtered cloud to a binary compressed PCD
-    if(toggleWritingToFile)
-    {
-      std::string path = "";
-      ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
-      fileIdx++;
-      ss.str("");
+    // Create an empty kdtree representation, and pass it to the normal estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+    ne.setSearchMethod(tree);
+
+    // Output datasets
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+    // Use all neighbors in a sphere of radius 3cm
+    ne.setRadiusSearch(searchRadius);
+
+    // Compute the features
+    ne.compute (*cloud_normals);
+
+    if(cloud_normals->points.size() != p->points.size()) {
+      ROS_ERROR("Number of points in estimated cloud with normals is unequalt to the original cloud");
+      return;
     }
 
-    // TODO See if this node can be split into two - one for the normal estimation and another for the surface smoothing
-    // The mesh generator node requires similar way of computing the normals so maybe there is a chance to make this process more flexible
-    // Source: http://pointclouds.org/documentation/tutorials/resampling.php
-    // Estimate normals and apply smoothing at the end before the mesh generation
-    // Creating the KD-tree
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    // Output has the PointNormal type in order to store the normals calculated by MLS
-    pcl::PointCloud<pcl::PointNormal> mls_points;
-    // Init object (second point type is for the normals, even if unused)
-    pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
-    mls.setComputeNormals (true);
-    // Set parameters
-    mls.setInputCloud (p);//(FINAL_CLOUD_FULL_REGISTERED_FRAMES);
-    mls.setPolynomialFit (false);
-    mls.setSearchMethod (tree);
-    mls.setSearchRadius (0.03);
-    // Reconstruct
-    mls.process (mls_points);
-
-    if(toggleWritingToFile)
+    /*if(toggleWritingToFile)
     {
       std::string path = "";
       ss << path << "cloud_smooth_surface_" << fileIdx << ".pcd";
@@ -147,35 +137,29 @@ public:
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
-    }
+    }*/
 
-    sensor_msgs::PointCloud2 output;
+    /*sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*p, output);
-    pub.publish(output);
+    pub.publish(output);*/
   }
 };
 
 int main(int argc, char* argv[])
 {
-  ros::init (argc, argv, "cloud_surface_smoothing_normal_estimation");
+  ros::init (argc, argv, "cloud_normal_estimation");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_sor";
   std::string topicOut = "points_ssne";
   bool toggleWriteToFile;
-  bool polynomialFit;
   double searchRadius;
 
-  //nh.param("subscribeTo", topicIn);
-  //nh.param("publish", topicOut);
   nh.param("write_to_file", toggleWriteToFile, false);
-  nh.param("polynomialFit", polynomialFit, false);
   nh.param("searchRadius", searchRadius, 0.03);
 
-  CloudProcessingNodeSSNE c(topicIn, topicOut);
+  CloudProcessingNodeNE c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
   c.setWritingToFile(toggleWriteToFile);
-  ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
-  c.setPolynomialFit(polynomialFit);
   c.setSearchRadius(searchRadius);
 
   while(nh.ok())

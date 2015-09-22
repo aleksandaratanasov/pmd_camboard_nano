@@ -34,24 +34,19 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - Mesh generation
-#ifdef BUILD_WITH_NURBS
-  // Use NURBS
-  #include <pcl/surface/on_nurbs/fitting_surface_tdm.h>
-  #include <pcl/surface/on_nurbs/fitting_curve_2d_asdm.h>
-  #include <pcl/surface/on_nurbs/triangulation.h>
-#else
-  // Use fast triangulation
-  #include <pcl/kdtree/kdtree_flann.h>
-  #include <pcl/features/normal_3d.h>
-  #include <pcl/surface/gp3.h>
-#endif
+// Use Poisson surface reconstruction
+// TODO See which headers are required for Poisson
 
 // Misc
 #include <sstream>
 #include <string>
 
-class CloudProcessingnodeMG
+// TODO Add poisson surface reconstruction - much better results (though careful - it creates water-tight meshes)
+// TODO Create one node per mesh generator. This will allow much more compact launch files
+
+class CloudProcessingNodeMGPSR
 {
+  typedef pcl::PointXYZ Point;
 protected:
   ros::NodeHandle nh;
   ros::Subscriber sub;
@@ -66,21 +61,19 @@ private:
   bool toggleWritingToFile;
 
 public:
-  CloudProcessingnodeMG(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeMGPSR(std::string topicIn, std::string topicOut)
     : fileIdx(0)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingnodeMG::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeMGPSR::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingnodeMG()
+  ~CloudProcessingNodeMGPSR()
   {
     sub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) {
-    toggleWritingToFile = _toggle;
-  }
+  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
 
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
@@ -97,76 +90,27 @@ public:
     pcl::fromROSMsg(*msg, pclCloud);
     pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
-#ifdef BUILD_WITH_NURBS
-    // NURBS
-    // Source: http://pointclouds.org/documentation/tutorials/bspline_fitting.php
-#else
-    // Fast triangulation
-    // Source: http://pointclouds.org/documentation/tutorials/greedy_projection.php
-    // Estimate the normals
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud (p);
-    n.setInputCloud (p);
-    n.setSearchMethod (tree);
-    n.setKSearch (20);
-    n.compute (*normals);
-
-    // Concatenate the XYZ and normal fields*
-    pcl::PointCloud<pcl::PointNormal>::Ptr p_with_normals (new pcl::PointCloud<pcl::PointNormal>);
-    pcl::concatenateFields (*p, *normals, *p_with_normals);
-    // p_with_normals = cloud + normals
-
-    // Create search tree
-    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
-    tree2->setInputCloud (p_with_normals);
-
-    // Initialize objects
-    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-    pcl::PolygonMesh triangles;
-
-    // Set the maximum distance between connected points (maximum edge length)
-    gp3.setSearchRadius(0.025);
-
-    // Set typical values for the parameters
-    gp3.setMu(2.5);
-    gp3.setMaximumNearestNeighbors(100);
-    gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-    gp3.setMinimumAngle(M_PI/18); // 10 degrees
-    gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-    gp3.setNormalConsistency(false);
-
-    // Get result
-    gp3.setInputCloud(p_with_normals);
-    gp3.setSearchMethod(tree2);
-    gp3.reconstruct(triangles);
-
-    // Additional vertex information
-    std::vector<int> parts = gp3.getPartIDs();
-    std::vector<int> states = gp3.getPointStates();
-#endif
-
+    // ...
 
     /*if(toggleWritingToFile)
     {
-      std::string path = "/home/latadmin/catkin_ws/devel/lib/pmd_camboard_nano/";
+      std::string path = "";
       ss << path << "cloud_mesh_generator_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
-    }*/
+    }
 
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*p, output);
-    pub.publish(output);
+    pub.publish(output);*/
   }
 };
 
 int main(int argc, char* argv[])
 {
-  ros::init (argc, argv, "cloud_mesh_generator");
+  ros::init (argc, argv, "cloud_mesh_generator_poisson");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_ssne";
   std::string topicOut = "points_mg";
@@ -174,7 +118,7 @@ int main(int argc, char* argv[])
 
   nh.param("write_to_file", toggleWriteToFile, false);
 
-  CloudProcessingnodeMG c(topicIn, topicOut);
+  CloudProcessingNodeMGPSR c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
   c.setWritingToFile(toggleWriteToFile);
   //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
