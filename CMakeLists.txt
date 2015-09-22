@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pmd_camboard_nano)
 
 # TODO Add dynamic reconfiguration for the processing nodes too
+# TODO Move all class definitions to headers and the implementions to source files - create shared library (one per processing node or all together)
 
 find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs image_transport nodelet dynamic_reconfigure tf)
 
