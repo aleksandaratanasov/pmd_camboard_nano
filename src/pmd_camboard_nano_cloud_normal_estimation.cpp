@@ -34,6 +34,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - For the normals estimation and surface smoothing
+#include "config.h"
 #ifdef ENABLE_OPENMP
   #include <pcl/features/normal_3d_omp.h>
 #else
@@ -75,6 +76,7 @@ public:
   ~CloudProcessingNodeNE()
   {
     sub.shutdown();
+    pub.shutdown();
   }
 
   void setWritingToFile(bool _toggle) {
@@ -116,32 +118,37 @@ public:
     ne.setSearchMethod(tree);
 
     // Output datasets
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
 
     // Use all neighbors in a sphere of radius 3cm
     ne.setRadiusSearch(searchRadius);
 
     // Compute the features
-    ne.compute (*cloud_normals);
+    ne.compute (*normals);
 
-    if(cloud_normals->points.size() != p->points.size()) {
+    if(normals->points.size() != p->points.size()) {
       ROS_ERROR("Number of points in estimated cloud with normals is unequalt to the original cloud");
       return;
     }
 
-    /*if(toggleWritingToFile)
+    // Merge normals with the cloud
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::copyPointCloud(*p, *cloud_with_normals);
+    pcl::copyPointCloud(*normals, *cloud_with_normals);
+
+    if(toggleWritingToFile)
     {
       std::string path = "";
-      ss << path << "cloud_smooth_surface_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), mls_points);
+      ss << path << "cloud_normals_" << fileIdx << ".pcd";
+      pcl::io::savePCDFileBinaryCompressed(ss.str(), cloud_with_normals);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
-    }*/
+    }
 
-    /*sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*p, output);
-    pub.publish(output);*/
+    sensor_msgs::PointCloud2 output;
+    pcl::toROSMsg(*cloud_with_normals, output);
+    pub.publish(output);
   }
 };
 
@@ -150,7 +157,7 @@ int main(int argc, char* argv[])
   ros::init (argc, argv, "cloud_normal_estimation");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_sor";
-  std::string topicOut = "points_ssne";
+  std::string topicOut = "points_ne";
   bool toggleWriteToFile;
   double searchRadius;
 

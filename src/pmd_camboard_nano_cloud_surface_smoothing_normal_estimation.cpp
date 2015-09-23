@@ -74,6 +74,7 @@ public:
   ~CloudProcessingNodeSSNE()
   {
     sub.shutdown();
+    pub.shutdown();
   }
 
   void setWritingToFile(bool _toggle) {

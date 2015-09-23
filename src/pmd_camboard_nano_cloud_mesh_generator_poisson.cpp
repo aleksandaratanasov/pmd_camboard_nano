@@ -71,6 +71,7 @@ public:
   ~CloudProcessingNodeMGPSR()
   {
     sub.shutdown();
+    pub.shutdown();
   }
 
   void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
@@ -95,7 +96,7 @@ public:
     /*if(toggleWritingToFile)
     {
       std::string path = "";
-      ss << path << "cloud_mesh_generator_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
+      ss << path << "cloud_mesh_generator_poisson_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
