@@ -82,6 +82,14 @@ add_executable(${PROJECT_NAME}_cloud_normal_estimation src/pmd_camboard_nano_clo
 target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${PCL_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
 
+# Processing node: iterative closest point
+# Input: cloud
+# Output: cloud (merged sequence of input clouds)
+message("Setting up binary for iterative closest point")
+add_executable(${PROJECT_NAME}_cloud_icp src/pmd_camboard_nano_cloud_icp.cpp)
+target_link_libraries(${PROJECT_NAME}_cloud_icp ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_cloud_icp ${catkin_LIBRARIES} boost_system pthread)
+
 # Processing node: surface smoothing
 # Input: cloud, normals
 # Output: cloud

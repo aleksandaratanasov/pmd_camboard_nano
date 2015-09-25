@@ -23,8 +23,8 @@
 // ROS
 // ROS - Misc
 #include <ros/ros.h>
+// ...
 // ROS - Publishing
-//#include <ros/publisher.h>
 #include <pcl_ros/publisher.h>
 
 // PCL
@@ -33,19 +33,14 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-// PCL - Mesh generation
-// Use fast triangulation
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/surface/gp3.h>
+//
 
 // Misc
 #include <sstream>
 #include <string>
 
-class CloudProcessingNodeMGFT
+class CloudProcessingNodeICP
 {
-  typedef pcl::PointXYZ Point;
 protected:
   ros::NodeHandle nh;
   ros::Subscriber sub;
@@ -58,23 +53,29 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
-
+  // ...
+  
 public:
-  CloudProcessingNodeMGFT(std::string topicIn, std::string topicOut)
-    : fileIdx(0)
+  CloudProcessingNodeICP(std::string topicIn, std::string topicOut)
+    : fileIdx(0),
+      //fileSmoothSurfOutputIdx(0),
+      //toggleWritingToFile(false)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeMGFT::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeICP::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingNodeMGFT()
+  ~CloudProcessingNodeICP()
   {
     sub.shutdown();
-    pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool _toggle) {
+    toggleWritingToFile = _toggle;
+  }
 
+  // ...
+  
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
     if(msg->data.empty())
@@ -90,82 +91,42 @@ public:
     pcl::fromROSMsg(*msg, pclCloud);
     pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
-    // Fast triangulation
-    // Source: http://pointclouds.org/documentation/tutorials/greedy_projection.php
-    // Estimate the normals
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud (p);
-    n.setInputCloud (p);
-    n.setSearchMethod (tree);
-    n.setKSearch (20);
-    n.compute (*normals);
-
-    // Concatenate the XYZ and normal fields*
-    pcl::PointCloud<pcl::PointNormal>::Ptr p_with_normals (new pcl::PointCloud<pcl::PointNormal>);
-    pcl::concatenateFields (*p, *normals, *p_with_normals);
-    // p_with_normals = cloud + normals
-
-    // Create search tree
-    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
-    tree2->setInputCloud (p_with_normals);
-
-    // Initialize objects
-    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-    pcl::PolygonMesh triangles;
-
-    // Set the maximum distance between connected points (maximum edge length)
-    gp3.setSearchRadius(0.025);
-
-    // Set typical values for the parameters
-    gp3.setMu(2.5);
-    gp3.setMaximumNearestNeighbors(100);
-    gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-    gp3.setMinimumAngle(M_PI/18); // 10 degrees
-    gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-    gp3.setNormalConsistency(false);
-
-    // Get result
-    gp3.setInputCloud(p_with_normals);
-    gp3.setSearchMethod(tree2);
-    gp3.reconstruct(triangles);
-
-    // Additional vertex information
-    std::vector<int> parts = gp3.getPartIDs();
-    std::vector<int> states = gp3.getPointStates();
-
-    /*if(toggleWritingToFile)
+    // Do something with the PCL cloud
+    // ...
+    
+    
+    // Optional: write result to a binary compressed PCD file
+    if(toggleWritingToFile)
     {
-      std::string path = "";
-      ss << path << "cloud_mesh_generator_fast_triangulation_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
+      //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
+      std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
+      ss << path << "cloud_template_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
-      ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
     }
 
+    
+    // Convert result back to ROS message and publish it
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*p, output);
-    pub.publish(output);*/
+    pub.publish(output);
   }
 };
 
 int main(int argc, char* argv[])
 {
-  ros::init (argc, argv, "cloud_mesh_generator_fast_triangulation");
+  ros::init (argc, argv, "cloud_template");
   ros::NodeHandle nh("~");
-  std::string topicIn = "points_ssne";
-  std::string topicOut = "points_mg";
-  bool toggleWriteToFile;
+  std::string topicIn = "/camera/points"; //The "raw" output from the PMD camera (raw means unfiltered)
+  std::string topicOut = "points_template";
+  // ...
 
   nh.param("write_to_file", toggleWriteToFile, false);
 
-  CloudProcessingNodeMGFT c(topicIn, topicOut);
+  CloudProcessingNodeICP c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
-  //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
-  // ...
 
   while(nh.ok())
     ros::spin();

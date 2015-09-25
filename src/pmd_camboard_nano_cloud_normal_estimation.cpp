@@ -114,17 +114,17 @@ public:
 
     // Create an empty kdtree representation, and pass it to the normal estimation object.
     // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
     ne.setSearchMethod(tree);
 
     // Output datasets
-    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 
     // Use all neighbors in a sphere of radius 3cm
     ne.setRadiusSearch(searchRadius);
 
     // Compute the features
-    ne.compute (*normals);
+    ne.compute(*normals);
 
     if(normals->points.size() != p->points.size()) {
       ROS_ERROR("Number of points in estimated cloud with normals is unequalt to the original cloud");
@@ -136,11 +136,13 @@ public:
     pcl::copyPointCloud(*p, *cloud_with_normals);
     pcl::copyPointCloud(*normals, *cloud_with_normals);
 
+    // Optional: write cloud with normals to a binary compressed PCD
     if(toggleWritingToFile)
     {
       std::string path = "";
       ss << path << "cloud_normals_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), cloud_with_normals);
+      pcl::io::savePCDFileBinaryCompressed(ss.str(), *cloud_with_normals);
+      //pcl::io::savePCDFileASCII(ss.str(), *cloud_with_normals);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
@@ -158,14 +160,14 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh("~");
   std::string topicIn = "points_sor";
   std::string topicOut = "points_ne";
-  bool toggleWriteToFile;
+  bool toggleWriteToFile = false;
   double searchRadius;
 
   nh.param("write_to_file", toggleWriteToFile, false);
   nh.param("searchRadius", searchRadius, 0.03);
 
   CloudProcessingNodeNE c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
+  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
   c.setSearchRadius(searchRadius);
 

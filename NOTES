@@ -1,0 +1,9 @@
+I. Poisson surface reconstruction - creates water-tight mesh. In order to produce
+a mesh with great quality we need to:
+1)capture the object from as many sides as possible
+2)merge all in a single point cloud
+3)remove outliers
+4)filter
+5)apply Poisson surface reconstruction
+
+If the point cloud is not "closed" this will result in a mesh of poor quality

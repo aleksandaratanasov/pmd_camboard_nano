@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
   nh.param("write_to_file", toggleWriteToFile, false);
 
   CloudProcessingNodeMGPSR c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
+  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
   //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
   // ...

@@ -64,10 +64,8 @@ private:
   // ...
   
 public:
-  CloudProcessingNodeNBSF(std::string topicIn, std::string topicOut)
-    : fileIdx(0),
-      //fileSmoothSurfOutputIdx(0),
-      //toggleWritingToFile(false)
+  CloudProcessingNodeTEMPLATE(std::string topicIn, std::string topicOut)
+    : fileIdx(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeTEMPLATE::subCallback, this);
     pub.advertise(nh, topicOut, 1);
@@ -106,14 +104,15 @@ public:
     // Optional: write result to a binary compressed PCD file
     if(toggleWritingToFile)
     {
-      //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
-      std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
-      ss << path << "cloud_template_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
-      fileIdx++;
       ss.str("");
+      //std::string path = ""; // If left empty (including no changes in the launch file) the file will be written to the folder where the launch file was started from
+      ss << path << "cloud_template_" << fileIdx << ".pcd";
+      if(pcl::io::savePCDFileBinaryCompressed(ss.str(), *p) == -1) {
+        ROS_ERROR("Failed to write file. Invalid path!");
+        return;
+      }
+      fileIdx++;
     }
-
     
     // Convert result back to ROS message and publish it
     sensor_msgs::PointCloud2 output;
@@ -133,7 +132,7 @@ int main(int argc, char* argv[])
   nh.param("write_to_file", toggleWriteToFile, false);
 
   CloudProcessingNodeTEMPLATE c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
+  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
 
   while(nh.ok())

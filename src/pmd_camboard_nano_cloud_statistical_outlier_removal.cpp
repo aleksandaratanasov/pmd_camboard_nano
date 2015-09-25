@@ -60,9 +60,6 @@ private:
 public:
   CloudProcessingNodeSOR(std::string topicIn, std::string topicOut)
     : fileIdx(0)
-      //toggleWritingToFile(false),
-      //meanK(50),
-      //stdDevMulThresh(1.0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeSOR::subCallback, this);
     pub.advertise(nh, topicOut, 1);
@@ -114,7 +111,7 @@ public:
     ROS_INFO("Filtering cloud data");
     // Remove the outliers
     sor.filter(*pclCloud_filtered);
-    ROS_INFO_STREAM("Filtering completed. a cloud message with " << (msg->height*msg->width - pclCloud_filtered->height*pclCloud_filtered->width) << " points as outliers leaving " << pclCloud_filtered->height * pclCloud_filtered->width << " in total");
+    ROS_INFO_STREAM("Filtering completed. Removed " << (msg->height*msg->width - pclCloud_filtered->height*pclCloud_filtered->width) << " points as outliers and left " << pclCloud_filtered->height * pclCloud_filtered->width << " inliers");
 
     // Negating an applying filtering returns the outliers if required
     //sor.setNegative(true);
@@ -148,7 +145,7 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh("~");
   std::string topicIn = "/camera/points";
   std::string topicOut = "points_sor";
-  bool toggleWriteToFile;
+  bool toggleWriteToFile = false;
   int meanK;
   double stdDevMulThresh;
 
@@ -162,7 +159,7 @@ int main(int argc, char* argv[])
   ROS_INFO("Publishing to \"%s\"", topicOut.c_str());
 
   CloudProcessingNodeSOR c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << toggleWriteToFile ? "activated" : "deactivated");
+  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
   ROS_INFO_STREAM("Setting mean K to " << meanK << " and standard deviation multipler threshold to " << stdDevMulThresh);
   c.setMeanK(meanK);

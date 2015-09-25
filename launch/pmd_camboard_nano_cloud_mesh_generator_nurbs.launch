@@ -5,7 +5,7 @@
   <group ns="$(arg processing)">
 
     <!-- Cloud handler -->
-    <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_mesh_generator" name="cloud_mesh_generator">
+    <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_mesh_generator_nurbs" name="cloud_mesh_generator_nurbs">
           <param name="write_to_file" type="bool" value="true"/>
     </node>
   </group>
