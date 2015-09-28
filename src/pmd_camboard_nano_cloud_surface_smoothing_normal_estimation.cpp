@@ -129,7 +129,7 @@ public:
 
     if(toggleWritingToFile)
     {
-      std::string path = "";
+      std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
       ss << path << "cloud_smooth_surface_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), mls_points);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");

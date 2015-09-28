@@ -139,7 +139,7 @@ public:
     // Optional: write cloud with normals to a binary compressed PCD
     if(toggleWritingToFile)
     {
-      std::string path = "";
+      std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
       ss << path << "cloud_normals_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *cloud_with_normals);
       //pcl::io::savePCDFileASCII(ss.str(), *cloud_with_normals);

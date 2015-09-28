@@ -125,7 +125,7 @@ public:
     // Optional: write filtered cloud to a binary compressed PCD
     if(toggleWritingToFile)
     {
-      std::string path = "";
+      std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
       ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
       pcl::io::savePCDFileBinaryCompressed(ss.str(), *pclCloud_filtered);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
