@@ -23,7 +23,7 @@ find_package(PMDSDK REQUIRED)
 # Register Boost
 find_package(Boost REQUIRED COMPONENTS system)
 # Register PCL
-find_package(PCL 1.7 REQUIRED COMPONENTS common io filters kdtree surface features)
+find_package(PCL 1.7 REQUIRED COMPONENTS io common filters features kdtree surface)
 # Eigen
 find_package(cmake_modules REQUIRED) # Required for Eigen
 find_package(Eigen REQUIRED)
@@ -38,6 +38,8 @@ include_directories(include ${PCL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${PMDSDK_
 ####################################################### BUILD #######################################################
 # Make sure configure headers are built before any node using them
 message("Setting up binaries for driver node and nodlet")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") # Position Independent Code is very useful when multiple binaries use the same library.
+                                                # This makes sure that the library is loaded once in memory and all binaries use it
 add_library(${PROJECT_NAME}_nodelet src/driver_nodelet.cpp src/pmd_camboard_nano.cpp)
 target_link_libraries(${PROJECT_NAME}_nodelet ${catkin_LIBRARIES} ${PMDSDK_LIBRARIES})
 add_dependencies(${PROJECT_NAME}_nodelet ${PROJECT_NAME}_gencfg)
@@ -61,7 +63,7 @@ target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${catkin
 
 # Processing node: normal estimation
 # Input: cloud
-# Output: cloud, normals
+# Output: cloud with normals
 message("Setting up binary for normal estimation")
 option(ENABLE_OPENMP "Enable OpenMP for estimating the normals of a point cloud" OFF)
 if(ENABLE_OPENMP)

@@ -77,19 +77,11 @@ public:
     pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) {
-    toggleWritingToFile = _toggle;
-  }
+  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
 
-  void setPolynomialFit(bool _polynomialFit)
-  {
-    polynomialFit = _polynomialFit;
-  }
+  void setPolynomialFit(bool _polynomialFit) { polynomialFit = _polynomialFit; }
 
-  void setSearchRadius(double _searchRadius)
-  {
-    searchRadius = _searchRadius;
-  }
+  void setSearchRadius(double _searchRadius) { searchRadius = _searchRadius; }
 
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
@@ -102,17 +94,12 @@ public:
     // Convert ROS message to PCL-compatible data structure
     ROS_INFO_STREAM("Received a cloud message with " << msg->height * msg->width << " points");
     ROS_INFO("Converting ROS cloud message to PCL compatible data structure");
-    pcl::PointCloud<pcl::PointXYZ> pclCloud;
+    pcl::PointCloud<pcl::PointNormal> pclCloud;
     pcl::fromROSMsg(*msg, pclCloud);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
-
-    // Source: http://robotica.unileon.es/mediawiki/index.php/PCL/OpenNI_tutorial_2:_Cloud_processing_%28basic%29#Removing_NaNs
-    // Removing NaN points from cloud (if those are not remove the KD-Tree and MLS will fail)
-    std::vector<int> mapping; //
-    pcl::removeNaNFromPointCloud(*p, *p, mapping);
+    pcl::PointCloud<pcl::PointNormal>::Ptr p(new pcl::PointCloud<pcl::PointNormal>(pclCloud));
 
     // Optional: write filtered cloud to a binary compressed PCD
-    if(toggleWritingToFile)
+    /*if(toggleWritingToFile)
     {
       std::string path = "";
       ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
@@ -133,7 +120,7 @@ public:
     pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
     mls.setComputeNormals (true);
     // Set parameters
-    mls.setInputCloud (p);//(FINAL_CLOUD_FULL_REGISTERED_FRAMES);
+    mls.setInputCloud(p);//(FINAL_CLOUD_FULL_REGISTERED_FRAMES);
     mls.setPolynomialFit (false);
     mls.setSearchMethod (tree);
     mls.setSearchRadius (0.03);
@@ -152,7 +139,7 @@ public:
 
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*p, output);
-    pub.publish(output);
+    pub.publish(output);*/
   }
 };
 

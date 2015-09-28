@@ -159,9 +159,11 @@ int main(int argc, char* argv[])
   ROS_INFO("Publishing to \"%s\"", topicOut.c_str());
 
   CloudProcessingNodeSOR c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
+  ROS_INFO_STREAM("Writing to files: " << (toggleWriteToFile ? "enabled" : "disabled") << "\n"
+                  << "Mean K: " << meanK << "\n"
+                  << "Standard deviation threshold: " << stdDevMulThresh
+                  );
   c.setWritingToFile(toggleWriteToFile);
-  ROS_INFO_STREAM("Setting mean K to " << meanK << " and standard deviation multipler threshold to " << stdDevMulThresh);
   c.setMeanK(meanK);
   c.setStdDevMulThres(stdDevMulThresh);
 

@@ -63,7 +63,7 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
-  double searchRadius; // sphere radius that is to be used for determining the k-nearest neighbors used for fitting
+  double searchRadius; // sphere radius that is to be used for determining the k-nearest neighbours used for fitting
 
 public:
   CloudProcessingNodeNE(std::string topicIn, std::string topicOut)
@@ -116,18 +116,18 @@ public:
     // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
     ne.setSearchMethod(tree);
+    ne.setRadiusSearch(searchRadius);
 
     // Output datasets
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-
-    // Use all neighbors in a sphere of radius 3cm
-    ne.setRadiusSearch(searchRadius);
 
     // Compute the features
     ne.compute(*normals);
 
     if(normals->points.size() != p->points.size()) {
-      ROS_ERROR("Number of points in estimated cloud with normals is unequalt to the original cloud");
+      ROS_ERROR_STREAM("Number of points in estimated cloud with normals is unequalt to the original cloud:" << "\n"
+                       << "Original: " << p->points.size() << "\n"
+                       << "Normals: " << normals->points.size());
       return;
     }
 
@@ -161,13 +161,14 @@ int main(int argc, char* argv[])
   std::string topicIn = "points_sor";
   std::string topicOut = "points_ne";
   bool toggleWriteToFile = false;
-  double searchRadius;
+  double searchRadius = 0.;
 
   nh.param("write_to_file", toggleWriteToFile, false);
-  nh.param("searchRadius", searchRadius, 0.03);
+  nh.param("searchRadius", searchRadius, .03);
 
   CloudProcessingNodeNE c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
+  ROS_INFO_STREAM("Writing to files: " << (toggleWriteToFile ? "enabled" : "disabled") << "\n"
+                  << "Search radius: " << searchRadius);
   c.setWritingToFile(toggleWriteToFile);
   c.setSearchRadius(searchRadius);
 

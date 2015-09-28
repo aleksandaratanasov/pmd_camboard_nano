@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="processing" default="processing"/>
+  <group ns="$(arg processing)">
+
+    <!-- Cloud handler -->
+    <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_mesh_generator_fast_triangulation" name="cloud_mesh_generator_fast_triangulation" output="screen">
+          <param name="write_to_file" type="bool" value="true"/>
+          <param name="searchRadius" type="double" value="0.025"/>
+          <param name="mu" type="double" value="2.5"/>
+          <param name="maxNN" type="int" value="100"/>
+          <!-- Angles are in degrees (internally converted to radians) -->
+          <param name="maxSurfaceAngle" type="double" value="45.0"/>
+          <param name="minAngle" type="double" value="10.0"/>
+          <param name="maxAngle" type="double" value="120.0"/>
+          <param name="normalConsistency" type="bool" value="False"/>
+    </node>
+  </group>
+</launch>

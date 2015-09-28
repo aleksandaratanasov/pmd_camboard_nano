@@ -23,6 +23,7 @@
 // ROS
 // ROS - Misc
 #include <ros/ros.h>
+#include <ros/console.h>
 // ...
 // ROS - Publishing
 #include <pcl_ros/publisher.h>
@@ -38,6 +39,7 @@
 // Misc
 #include <sstream>
 #include <string>
+#include <boost/container/stable_vector.hpp>
 
 class CloudProcessingNodeICP
 {
@@ -53,13 +55,14 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
-  // ...
+  unsigned int capacity;
+  boost::container::stable_vector<pcl::PointCloud<pcl::PointXYZ> > cloud_container;
+
+  void icp_thread();
   
 public:
   CloudProcessingNodeICP(std::string topicIn, std::string topicOut)
-    : fileIdx(0),
-      //fileSmoothSurfOutputIdx(0),
-      //toggleWritingToFile(false)
+    : fileIdx(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeICP::subCallback, this);
     pub.advertise(nh, topicOut, 1);
@@ -72,6 +75,10 @@ public:
 
   void setWritingToFile(bool _toggle) {
     toggleWritingToFile = _toggle;
+  }
+
+  void setCapacity(unsigned int _capacity) {
+    capacity = _capacity;
   }
 
   // ...
@@ -120,9 +127,16 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh("~");
   std::string topicIn = "/camera/points"; //The "raw" output from the PMD camera (raw means unfiltered)
   std::string topicOut = "points_template";
-  // ...
+  bool toggleWriteToFile;
+  int capacity;
+
+  if(capacity <= 0) {
+    ROS_WARN("Capacity <= 0. Falling back to default: 30");
+    capacity = 30;
+  }
 
   nh.param("write_to_file", toggleWriteToFile, false);
+  nh.param("capacity", capacity, 30); // capture a maximum of 30 frames before triggering the ICP
 
   CloudProcessingNodeICP c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));

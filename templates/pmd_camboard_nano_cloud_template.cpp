@@ -127,6 +127,7 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh("~");
   std::string topicIn = "/camera/points"; //The "raw" output from the PMD camera (raw means unfiltered)
   std::string topicOut = "points_template";
+  bool toggleWriteToFile;
   // ...
 
   nh.param("write_to_file", toggleWriteToFile, false);

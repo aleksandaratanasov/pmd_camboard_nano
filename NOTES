@@ -1,9 +1,28 @@
 I. Poisson surface reconstruction - creates water-tight mesh. In order to produce
 a mesh with great quality we need to:
+
 1)capture the object from as many sides as possible
 2)merge all in a single point cloud
 3)remove outliers
 4)filter
 5)apply Poisson surface reconstruction
 
-If the point cloud is not "closed" this will result in a mesh of poor quality
+If the point cloud is not "closed" this will result in a mesh of poor quality.
+------------------------------------------------------------------------------
+II. Cloud merging - currently due to lack of transformation information 
+(interfacing the KUKA robot is pending) ICP will be used as the only way of 
+registering the captured clouds (frames). This is far from a perfect solution but
+is the optimal one considering the lack of transformation data.
+
+1)ICP merging node - this node takes a sequence of clouds (size of sequence is 
+determined by the capacity parameter) and uses PCL's ICP implementation to 
+register and merge the captured clouds. Depending on the object the results are 
+from good to poor (especially with flat objects where the side that is very thin 
+doesn't provide enough points for a decent registration)
+2)Transformation and merging node - this node will combine a captured cloud 
+along with the transformation data from the robot in order to register a cloud 
+sequence and merge it together
+------------------------------------------------------------------------------
+III. Removing NaNs - Kd-Tree, MLS etc. fail if NaN values are present in a point cloud.
+When filtering of some sort is applied, it is recommended to use pcl::removeNaNFromPointCloud(...)
+to remove those.
