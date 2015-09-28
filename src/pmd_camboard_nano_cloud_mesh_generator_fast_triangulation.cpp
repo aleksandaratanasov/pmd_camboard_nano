@@ -141,8 +141,7 @@ public:
     gp3.setInputCloud(p_with_normals);
     gp3.setSearchMethod(tree2);
     gp3.reconstruct(*mesh);
-
-    ROS_INFO_STREAM("Mesh number of polygons: " << mesh->polygons.size());
+    ROS_INFO_STREAM("Number of polygons: " << mesh->polygons.size());
 
     // Additional vertex information
     //std::vector<int> parts = gp3.getPartIDs();
@@ -150,7 +149,6 @@ public:
 
     if(toggleWritingToFile)
     {
-      //std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/launch/";
       std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
       ss << path << "cloud_mesh_generator_fast_triangulation_" << fileIdx << ".stl";
       pcl::io::savePolygonFileSTL(ss.str(), *mesh);
@@ -197,12 +195,12 @@ int main(int argc, char* argv[])
   CloudProcessingNodeMGFT c(topicIn/*, topicOut*/);
   ROS_INFO_STREAM("Writing to files: " << (toggleWriteToFile ? "enabled" : "disabled") << "\n"
                   << "Search radius: " << searchRadius << "\n"
-                  << "\u039c: " << mu << "\n"
+                  << "\u03BC: " << mu << "\n"
                   << "Maximum nearest neighbours: " << maxNN << "\n"
                   << "Maximum surface angle: " << maxSurfaceAngle << "\n"
                   << "Minimum angle: " << minAngle << "\n"
-                  << "Maximum angle: " << maxAngle
-                  << "Normal consistency: " << (normalConsistency ? "enabled" : "disabled") << "\n");
+                  << "Maximum angle: " << maxAngle << "\n"
+                  << "Normal consistency: " << (normalConsistency ? "enabled" : "disabled"));
   c.setWritingToFile(toggleWriteToFile);
   c.setSearchRadius(searchRadius);
   c.setMu(mu);

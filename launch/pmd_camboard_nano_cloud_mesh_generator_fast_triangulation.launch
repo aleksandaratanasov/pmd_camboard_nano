@@ -14,7 +14,7 @@
           <param name="maxSurfaceAngle" type="double" value="45.0"/>
           <param name="minAngle" type="double" value="10.0"/>
           <param name="maxAngle" type="double" value="120.0"/>
-          <param name="normalConsistency" type="bool" value="False"/>
+          <param name="normalConsistency" type="bool" value="True"/>
     </node>
   </group>
 </launch>

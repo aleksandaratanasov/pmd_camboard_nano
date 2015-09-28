@@ -31,11 +31,12 @@
 // PCL - Misc
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_lib_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - Mesh generation
 // Use Poisson surface reconstruction
-// TODO See which headers are required for Poisson
+#include <pcl/surface/poisson.h>
 
 // Misc
 #include <sstream>
@@ -50,7 +51,7 @@ class CloudProcessingNodeMGPSR
 protected:
   ros::NodeHandle nh;
   ros::Subscriber sub;
-  pcl_ros::Publisher<sensor_msgs::PointCloud2> pub;
+//  pcl_ros::Publisher<sensor_msgs::PointCloud2> pub;
 
 private:
   sensor_msgs::PointCloud2 cloud;
@@ -59,22 +60,25 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
+  int depth;
 
 public:
-  CloudProcessingNodeMGPSR(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeMGPSR(std::string topicIn/*, std::string topicOut*/)
     : fileIdx(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeMGPSR::subCallback, this);
-    pub.advertise(nh, topicOut, 1);
+//    pub.advertise(nh, topicOut, 1);
   }
 
   ~CloudProcessingNodeMGPSR()
   {
     sub.shutdown();
-    pub.shutdown();
+//    pub.shutdown();
   }
 
   void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+
+  void setDepth(int _depth) { depth = _depth; }
 
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
@@ -87,23 +91,28 @@ public:
     // Convert ROS message to PCL-compatible data structure
     ROS_INFO_STREAM("Received a cloud message with " << msg->height * msg->width << " points");
     ROS_INFO("Converting ROS cloud message to PCL compatible data structure");
-    pcl::PointCloud<pcl::PointXYZ> pclCloud;
+    pcl::PointCloud<pcl::PointNormal> pclCloud;
     pcl::fromROSMsg(*msg, pclCloud);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
+    pcl::PointCloud<pcl::PointNormal>::Ptr p_with_normals(new pcl::PointCloud<pcl::PointNormal>(pclCloud));
 
-    // ...
+    pcl::Poisson<pcl::PointNormal> poisson;
+    pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
+    poisson.setDepth(depth);
+    poisson.setInputCloud(p_with_normals);
+    poisson.reconstruct(*mesh);
+    ROS_INFO_STREAM("Number of polygons: " << mesh->polygons.size());
 
-    /*if(toggleWritingToFile)
+    if(toggleWritingToFile)
     {
       std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
-      ss << path << "cloud_mesh_generator_poisson_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
+      ss << path << "cloud_mesh_generator_poisson_" << fileIdx << ".stl";
+      pcl::io::savePolygonFileSTL(ss.str(), *mesh);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
     }
 
-    sensor_msgs::PointCloud2 output;
+    /*sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*p, output);
     pub.publish(output);*/
   }
@@ -113,17 +122,19 @@ int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_mesh_generator_poisson");
   ros::NodeHandle nh("~");
-  std::string topicIn = "points_ssne";
-  std::string topicOut = "points_mg";
+  std::string topicIn = "points_ne";
+//  std::string topicOut = "points_mg";
   bool toggleWriteToFile;
+  int depth;
 
   nh.param("write_to_file", toggleWriteToFile, false);
+  nh.param("depth", depth, 10);
 
-  CloudProcessingNodeMGPSR c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
+  CloudProcessingNodeMGPSR c(topicIn/*, topicOut*/);
+  ROS_INFO_STREAM("Writing to files: " << (toggleWriteToFile ? "enabled" : "disabled") << "\n"
+                  << "Depth: " << depth);
   c.setWritingToFile(toggleWriteToFile);
-  //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
-  // ...
+  c.setDepth(depth);
 
   while(nh.ok())
     ros::spin();

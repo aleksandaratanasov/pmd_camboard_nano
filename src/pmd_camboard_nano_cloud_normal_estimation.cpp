@@ -107,6 +107,7 @@ public:
     // Create the normal estimation class, and pass the input dataset to it
 #ifdef ENABLE_OPENMP
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+    ne.setNumberOfThreads(2);
 #else
     pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
 #endif
@@ -117,6 +118,9 @@ public:
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
     ne.setSearchMethod(tree);
     ne.setRadiusSearch(searchRadius);
+    Eigen::Vector4f centroid;
+    compute3DCentroid(*p, centroid);  // Compute the 3D centroid (X,Y and Z) and produce a vector which will be used for setting the view point
+    ne.setViewPoint(centroid[0], centroid[1], centroid[2]); // The view point is essential for the estimation of the normals
 
     // Output datasets
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
