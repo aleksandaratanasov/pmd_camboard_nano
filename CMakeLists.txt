@@ -4,14 +4,22 @@ project(pmd_camboard_nano)
 # TODO Add dynamic reconfiguration for the processing nodes too
 # TODO Move all class definitions to headers and the implementions to source files - create shared library (one per processing node or all together)
 
+set(CMAKE_BUILD_TYPE Release)
+
+if(UNIX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x -O3 -g0")
+  #-O3 (level of optimization 3)
+  #-g0 (no debug information)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs image_transport nodelet dynamic_reconfigure tf)
 
 generate_dynamic_reconfigure_options(cfg/PMD.cfg)
 
 catkin_package(
-    INCLUDE_DIRS include
-    CATKIN_DEPENDS roscpp sensor_msgs image_transport nodelet dynamic_reconfigure tf pcl_conversions pcl_msgs pcl_ros
-    DEPENDS boost_system PCL
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp sensor_msgs image_transport nodelet dynamic_reconfigure tf pcl_conversions pcl_msgs pcl_ros
+  DEPENDS boost_system PCL
 )
 
 # Set PMDSDK Requirements
@@ -58,7 +66,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 # the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
 message("Setting up binary for statistical outlier removal node")
 add_executable(${PROJECT_NAME}_cloud_statistical_outlier_removal src/pmd_camboard_nano_cloud_statistical_outlier_removal)
-target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_LIBRARIES}) #<---UNTIL LINKING ORDER IS RESOLVED USE ALL PCL LIBS # pcl_common pcl_io pcl_filters pcl_surface pcl_kdtree)
+target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_FILTERS_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${catkin_LIBRARIES} boost_system pthread)
 
 # Processing node: normal estimation
@@ -82,7 +90,7 @@ else()
   message("OpenMP disabled")
 endif()
 add_executable(${PROJECT_NAME}_cloud_normal_estimation src/pmd_camboard_nano_cloud_normal_estimation)
-target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_FEATURES_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
 
 # Processing node: iterative closest point
@@ -90,16 +98,16 @@ target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${catkin_LIBRARIES
 # Output: cloud (merged sequence of input clouds)
 message("Setting up binary for iterative closest point")
 add_executable(${PROJECT_NAME}_cloud_icp src/pmd_camboard_nano_cloud_icp.cpp)
-target_link_libraries(${PROJECT_NAME}_cloud_icp ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_cloud_icp ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_REGISTRATION_LIBRARIES} ${PCL_SEARCH_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_icp ${catkin_LIBRARIES} boost_system pthread)
 
 # Processing node: surface smoothing
 # Input: cloud, normals
 # Output: cloud
 message("Setting up binary for surface smoothing and normal estimation node")
-add_executable(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation src/pmd_camboard_nano_cloud_surface_smoothing_normal_estimation)
-target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${PCL_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
+add_executable(${PROJECT_NAME}_cloud_surface_smoothing src/pmd_camboard_nano_cloud_surface_smoothing)
+target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_KDTREE_LIBRARIES} ${PCL_FILTERS_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing ${catkin_LIBRARIES} boost_system pthread)
 
 # TODO one mesh generation procedure per node
 option(BUILD_WITH_NURBS "Build mesh generator with NURBS B-spline fitting (requires on_nurbs module)" OFF)
@@ -113,7 +121,7 @@ if(BUILD_WITH_NURBS)
   message("Setting up binary for mesh generator node with NURBS B-spline fitting")
   message("Warning: the on_nurbs module of PCL is experimental")
   add_executable(${PROJECT_NAME}_cloud_mesh_generator_nurbs src/pmd_camboard_nano_cloud_mesh_generator_nurbs)
-  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_nurbs ${PCL_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_nurbs ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SURFACE_LIBRARIES})
   target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_nurbs ${catkin_LIBRARIES} boost_system pthread)
 endif()
 
@@ -121,7 +129,7 @@ endif()
 if(BUILD_WITH_FAST_TRIANGULATION)
   message("Setting up binary for mesh generator node with fast triangulation")
   add_executable(${PROJECT_NAME}_cloud_mesh_generator_fast_triangulation src/pmd_camboard_nano_cloud_mesh_generator_fast_triangulation)
-  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_fast_triangulation ${PCL_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_fast_triangulation ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_KDTREE_LIBRARIES})
   target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_fast_triangulation ${catkin_LIBRARIES} boost_system pthread)
 endif()
 
@@ -130,6 +138,6 @@ if(BUILD_WITH_POISSON)
   message("Setting up binary for mesh generator node with Poisson surface reconstruction")
   message("Warning: creates water-tight meshes")
   add_executable(${PROJECT_NAME}_cloud_mesh_generator_poisson src/pmd_camboard_nano_cloud_mesh_generator_poisson)
-  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_poisson ${PCL_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_poisson ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SURFACE_LIBRARIES})
   target_link_libraries(${PROJECT_NAME}_cloud_mesh_generator_poisson ${catkin_LIBRARIES} boost_system pthread)
 endif()

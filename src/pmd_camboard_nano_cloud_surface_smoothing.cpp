@@ -42,7 +42,7 @@
 #include <sstream>
 #include <string>
 
-class CloudProcessingNodeSSNE
+class CloudProcessingNodeSS
 {
 protected:
   ros::NodeHandle nh;
@@ -56,22 +56,18 @@ private:
   u_int64_t fileIdx;
   std::ostringstream ss;
   bool toggleWritingToFile;
-  bool polynomialFit; // polynomial fit value is true if the surface and normal are approximated using a polynomial
-  double searchRadius; // sphere radius that is to be used for determining the k-nearest neighbors used for fitting
+  bool polynomialFit;       // polynomial fit value is true if the surface and normal are approximated using a polynomial
+  double searchRadius;      // sphere radius that is to be used for determining the k-nearest neighbors used for fitting
 
 public:
-  CloudProcessingNodeSSNE(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeSS(std::string topicIn, std::string topicOut)
     : fileIdx(0)
-      //fileSmoothSurfOutputIdx(0),
-      //toggleWritingToFile(false),
-      //polynomialFit(false),
-      //searchRadius(0.03)
   {
-    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeSSNE::subCallback, this);
+    sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeSS::subCallback, this);
     pub.advertise(nh, topicOut, 1);
   }
 
-  ~CloudProcessingNodeSSNE()
+  ~CloudProcessingNodeSS()
   {
     sub.shutdown();
     pub.shutdown();
@@ -145,10 +141,10 @@ public:
 
 int main(int argc, char* argv[])
 {
-  ros::init (argc, argv, "cloud_surface_smoothing_normal_estimation");
+  ros::init (argc, argv, "cloud_surface_smoothing");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_sor";
-  std::string topicOut = "points_ssne";
+  std::string topicOut = "points_ss";
   bool toggleWriteToFile;
   bool polynomialFit;
   double searchRadius;
@@ -157,12 +153,13 @@ int main(int argc, char* argv[])
   //nh.param("publish", topicOut);
   nh.param("write_to_file", toggleWriteToFile, false);
   nh.param("polynomialFit", polynomialFit, false);
-  nh.param("searchRadius", searchRadius, 0.03);
+  nh.param("searchRadius", searchRadius, .03);
 
-  CloudProcessingNodeSSNE c(topicIn, topicOut);
-  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
+  CloudProcessingNodeSS c(topicIn, topicOut);
+  ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated") << "\n"
+                  << "Polynomial fit: " << (polynomialFit ? "enabled" : "disabled") << "\n"
+                  << "Search radius: " << searchRadius);
   c.setWritingToFile(toggleWriteToFile);
-  ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);
   c.setPolynomialFit(polynomialFit);
   c.setSearchRadius(searchRadius);
 
