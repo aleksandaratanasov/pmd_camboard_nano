@@ -34,12 +34,17 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-//
+// PCL - Iterative Closest Point
+#include <pcl/registration/transforms.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
 
 // Misc
 #include <sstream>
 #include <string>
-#include <boost/container/stable_vector.hpp>
+#include <vector>
+#include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
 
 class CloudProcessingNodeICP
 {
@@ -49,6 +54,27 @@ protected:
   pcl_ros::Publisher<sensor_msgs::PointCloud2> pub;
 
 private:
+  // Define a new point representation for < x, y, z, curvature >
+  class CustomPointRepresentation : public pcl::PointRepresentation<pcl::PointNormal>
+  {
+  public:
+    CustomPointRepresentation ()
+    {
+      // Define the number of dimensions
+      pcl::PointRepresentation<pcl::PointNormal>::nr_dimensions_ = 4;
+    }
+
+    // Override the copyToFloatArray method to define our feature vector
+    virtual void copyToFloatArray (const pcl::PointNormal &p, float * out) const
+    {
+      // < x, y, z, curvature >
+      out[0] = p.x;
+      out[1] = p.y;
+      out[2] = p.z;
+      out[3] = p.curvature;
+    }
+  };
+
   sensor_msgs::PointCloud2 cloud;
 
   // For writing to files
@@ -56,16 +82,93 @@ private:
   std::ostringstream ss;
   bool toggleWritingToFile;
   unsigned int capacity;
-  boost::container::stable_vector<pcl::PointCloud<pcl::PointXYZ> > cloud_container;
+  double maxCorrespondenceDistance;
+  int maxIterations;
+  size_t fillStatus;
+  std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> clouds;
 
-  void icp_thread();
-  
+  void pairAlign(pcl::PointCloud<pcl::PointNormal>::Ptr src, const pcl::PointCloud<pcl::PointNormal>::Ptr dst, pcl::PointCloud<pcl::PointNormal>::Ptr temp, Eigen::Matrix4f &final_transform) {
+    // Instantiate our custom point representation (defined above) ...
+    CustomPointRepresentation point_representation;
+    // Weight the 'curvature' dimension so that it is balanced against x, y, and z
+    float alpha[4] = {1., 1., 1., 1.};
+    point_representation.setRescaleValues(alpha);
+
+
+    // Align
+    // TODO move IterativeClosestPointNonLinear object to a class member so that it won't be created all the time (settings are always the same so no need for that)
+    pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> reg;
+    reg.setTransformationEpsilon(1e-6);
+    // Set the maximum distance between two correspondences in source and destination to 10cm
+    // TODO Move ICP's max correspondence distance to the launch file since it is based on the dataset
+    reg.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
+    // Set the point presentation
+    reg.setPointRepresentation(boost::make_shared<const CustomPointRepresentation>(point_representation));
+    reg.setInputSource(src);
+    reg.setInputTarget(dst);
+
+    // Loop and optimize
+    ROS_INFO("Running optimization for a single pair");
+    Eigen::Matrix4f ti = Eigen::Matrix4f::Identity(), prev, targetToSource;
+    pcl::PointCloud<pcl::PointNormal>::Ptr reg_result = src;
+    reg.setMaximumIterations(maxIterations); // TODO Move max iterations to launch file
+
+    for(int i = 0; i < 30; ++i) {
+      src = reg_result;
+      // Estimate
+      reg.setInputSource(src);
+      reg.align(*reg_result);
+
+      // Accumulate transformation between each iteration
+      ti = reg.getFinalTransformation() * ti;
+
+      // Check if difference current and previous transformation is smaller than the threshold
+      // Refine the process by reducing the maximal correspondence distance
+      if (fabs((reg.getLastIncrementalTransformation() - prev).sum()) < reg.getTransformationEpsilon())
+        reg.setMaxCorrespondenceDistance(reg.getMaxCorrespondenceDistance() - .001);
+
+      prev = reg.getLastIncrementalTransformation ();
+    }
+
+    // Get transformation from target to source
+    targetToSource = ti.inverse();
+    // Transform target back to source frame
+    pcl::transformPointCloudWithNormals(*dst, *temp, targetToSource);
+    // Add source to transformed destination
+    *temp += *src;
+    final_transform = targetToSource;
+  }
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr runICP() {
+    // Run ICP
+    pcl::PointCloud<pcl::PointNormal>::Ptr result(new pcl::PointCloud<pcl::PointNormal>);
+    pcl::PointCloud<pcl::PointNormal>::Ptr src, dst;
+    Eigen::Matrix4f globalTransform = Eigen::Matrix4f::Identity(), pairTransform;
+
+    // Downsample (here we have < 20000 points per cloud so no need for that)
+    for(size_t cloud = 0; cloud < clouds.size(); cloud++) {
+      src = clouds.at(cloud - 1);
+      dst = clouds.at(cloud);
+      pcl::PointCloud<pcl::PointNormal>::Ptr temp(new pcl::PointCloud<pcl::PointNormal>);
+      pairAlign(src, dst, temp, pairTransform);
+
+      // Transform current pair into global transform
+      pcl::transformPointCloudWithNormals(*temp, *result, globalTransform);
+
+      // Update global transform based on the transform of the current pair
+      globalTransform = globalTransform * pairTransform;
+    }
+
+    return result;
+  }
+
 public:
   CloudProcessingNodeICP(std::string topicIn, std::string topicOut)
-    : fileIdx(0)
+    : fileIdx(0), fillStatus(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeICP::subCallback, this);
     pub.advertise(nh, topicOut, 1);
+    clouds.reserve(capacity);
   }
 
   ~CloudProcessingNodeICP()
@@ -73,15 +176,13 @@ public:
     sub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) {
-    toggleWritingToFile = _toggle;
-  }
+  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
 
-  void setCapacity(unsigned int _capacity) {
-    capacity = _capacity;
-  }
+  void setCapacity(unsigned int _capacity) { capacity = _capacity; }
 
-  // ...
+  void setMaxCorrespondenceDist(double _maxCorrespondenceDistance) { maxCorrespondenceDistance = _maxCorrespondenceDistance; }
+
+  void setMaxIterations(int _maxIterations) { maxIterations = _maxIterations; }
   
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
@@ -94,30 +195,42 @@ public:
     // Convert ROS message to PCL-compatible data structure
     ROS_INFO_STREAM("Received a cloud message with " << msg->height * msg->width << " points");
     ROS_INFO("Converting ROS cloud message to PCL compatible data structure");
-    pcl::PointCloud<pcl::PointXYZ> pclCloud;
+    pcl::PointCloud<pcl::PointNormal> pclCloud;
     pcl::fromROSMsg(*msg, pclCloud);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
+    pcl::PointCloud<pcl::PointNormal>::Ptr p(new pcl::PointCloud<pcl::PointNormal>(pclCloud));
 
-    // Do something with the PCL cloud
-    // ...
-    
-    
-    // Optional: write result to a binary compressed PCD file
-    if(toggleWritingToFile)
-    {
-      //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
-      std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
-      ss << path << "cloud_template_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
-      fileIdx++;
-      ss.str("");
+    // TODO Add multithreading here - fill a container, pass it onto a thread (copy of it), repeat
+    // Fill the vector with point clouds until the limit is reached
+    if(fillStatus != capacity) {
+      ROS_INFO_STREAM("Current capacity: " << fillStatus << " out of " << capacity);
+      clouds.at(fillStatus) = p;  // Add received cloud to the sequence
+      fillStatus++;
     }
+    else {
+      // Run the vector of clouds through ICP and generate the final cloud
+      // This is triggered once enough samples have been gathered
+      // Source: http://pointclouds.org/documentation/tutorials/pairwise_incremental_registration.php
+      // Source: http://pointclouds.org/documentation/tutorials/interactive_icp.php
+      pcl::PointCloud<pcl::PointNormal>::Ptr p_icp(runICP());
+      clouds.clear();
+      fillStatus = 0;
 
-    
-    // Convert result back to ROS message and publish it
-    sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*p, output);
-    pub.publish(output);
+      // Optional: write result to a binary compressed PCD file
+      if(toggleWritingToFile)
+      {
+        //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
+        std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
+        ss << path << "cloud_template_" << fileIdx << ".pcd";
+        pcl::io::savePCDFileBinaryCompressed(ss.str(), *p_icp);
+        fileIdx++;
+        ss.str("");
+      }
+
+      // Convert result back to ROS message and publish it
+      sensor_msgs::PointCloud2 output;
+      pcl::toROSMsg(*p_icp, output);
+      pub.publish(output);
+    }
   }
 };
 
@@ -125,18 +238,22 @@ int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_template");
   ros::NodeHandle nh("~");
-  std::string topicIn = "/camera/points"; //The "raw" output from the PMD camera (raw means unfiltered)
-  std::string topicOut = "points_template";
+  std::string topicIn = "points_sor";
+  std::string topicOut = "points_icp";
   bool toggleWriteToFile;
   int capacity;
+  double maxCorrespondenceDistance;
+  int maxIterations;
 
-  if(capacity <= 0) {
-    ROS_WARN("Capacity <= 0. Falling back to default: 30");
+  if(capacity < 2) {
+    ROS_WARN("Capacity < 2. Falling back to default: 30");
     capacity = 30;
   }
 
   nh.param("write_to_file", toggleWriteToFile, false);
   nh.param("capacity", capacity, 30); // capture a maximum of 30 frames before triggering the ICP
+  nh.param("maxCorrespondenceDist", maxCorrespondenceDistance, .1);
+  nh.param("maxIterations", maxIterations, 2);
 
   CloudProcessingNodeICP c(topicIn, topicOut);
   ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));

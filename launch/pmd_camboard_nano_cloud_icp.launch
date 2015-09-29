@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="processing" default="processing"/>
+  <group ns="$(arg processing)">
+
+    <!-- Cloud handler -->
+    <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_icp" name="cloud_icp" output="screen">
+          <param name="write_to_file" type="bool" value="false"/>
+          <param name="maxCorrespondenceDist" type="double" value="0.1">
+          <param name="maxIterations" type="int" value="2">
+    </node>
+  </group>
+</launch>

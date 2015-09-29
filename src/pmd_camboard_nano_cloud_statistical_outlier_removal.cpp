@@ -102,6 +102,7 @@ public:
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
 
     // Source: http://pointclouds.org/documentation/tutorials/statistical_outlier.php
+    // Note: use this before any registration to improve the results
     // Use a statistical outlier removal to reduce the number of outliers
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     // Configure the removal procedure
