@@ -140,6 +140,7 @@ private:
   }
 
   pcl::PointCloud<pcl::PointNormal>::Ptr runICP() {
+    ROS_INFO("Initiating ICP");
     // Run ICP
     pcl::PointCloud<pcl::PointNormal>::Ptr result(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PointCloud<pcl::PointNormal>::Ptr src, dst;
@@ -212,7 +213,8 @@ public:
       // Source: http://pointclouds.org/documentation/tutorials/pairwise_incremental_registration.php
       // Source: http://pointclouds.org/documentation/tutorials/interactive_icp.php
       pcl::PointCloud<pcl::PointNormal>::Ptr p_icp(runICP());
-      clouds.clear();
+      ROS_INFO("Cleaning sample sequence");
+      //clouds.clear(); // Don't use clear since it reduces the size of the vector to 0, which 1)might lead to crash and 2)misses the point of allocating the memory for the container in advance
       fillStatus = 0;
 
       // Optional: write result to a binary compressed PCD file
@@ -220,7 +222,7 @@ public:
       {
         //std::string path = "/home/USER/catkin_ws/devel/lib/pmd_camboard_nano/";
         std::string path = "~/catkin_ws/devel/lib/pmd_camboard_nano/";
-        ss << path << "cloud_template_" << fileIdx << ".pcd";
+        ss << path << "cloud_icp_" << fileIdx << ".pcd";
         pcl::io::savePCDFileBinaryCompressed(ss.str(), *p_icp);
         fileIdx++;
         ss.str("");

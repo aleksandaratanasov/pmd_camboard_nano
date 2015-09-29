@@ -26,3 +26,6 @@ sequence and merge it together
 III. Removing NaNs - Kd-Tree, MLS etc. fail if NaN values are present in a point cloud.
 When filtering of some sort is applied, it is recommended to use pcl::removeNaNFromPointCloud(...)
 to remove those.
+-----------------------------------------------------------------------------
+VI. Optimization on compiler level
+Nice tips can be found here: https://wiki.wxwidgets.org/Reducing_Executable_Size
