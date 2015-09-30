@@ -2,6 +2,10 @@ The MIT License
 ===============
 
 Copyright (c) 2012 Sergey Alexandrov
+PMD Camboard driver node and nodelet
+
+Copyright (c) 2015 Aleksandar Vladimirov Atanasov
+PMD Camboard processing nodes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
