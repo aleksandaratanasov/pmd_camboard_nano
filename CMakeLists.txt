@@ -81,7 +81,7 @@ if(ENABLE_OPENMP)
   if(CMAKE_COMPILER_IS_GNUCXX)
     # Add this to a more global scope if other parts of the source code can use OpenMP and not only the normals estimation
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-    configure_file(config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
+#    configure_file(config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
     add_definitions(ENABLE_OPENMP)
     message("OpenMP enabled")
   else()
