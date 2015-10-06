@@ -43,7 +43,10 @@ Package installation
 --------------------
 
 Clone this repository into a local catkin workspace and simply call
-`catkin_make` in the workspace folder.
+`catkin_make` in the workspace folder. For details on building the processing nodes see the
+`CMakeLists.txt`. For full build execute
+
+    catkin_make -DENABLE_OPENMP=ON -DBUILD_WITH_NURBS=ON -DBUILD_WITH_FAST_TRIANGULATION=ON -DBUILD_WITH_POISSON=ON
 
 ROS API
 =======
