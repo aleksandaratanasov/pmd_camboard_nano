@@ -20,12 +20,10 @@ by the functionality it contains. Currently following processing nodes are inclu
  * **Statistical outlier removal** - for removing a cloud's outliers using the SOR filter
  * **Normal estimation** - for calculating a cloud's normals (optional but encouraged: enable OpenMP)
  * **Surface smoothing** - for smoothing a cloud's surface (note: extensive testing pending)
- * **Mesh generators** - for generating a mesh from a cloud
-  
+ * **Mesh generators** - for generating a mesh from a cloud  
   * **Fast triangulation** - uses Greedy projection algorithm
   * **Poisson** - uses Poisson algorithm
   * **NURBS** - uses NURBS (warning: poor performance and incomplete launch file; the *on_nurbs* module is also currently unstable!)
-  
  * **Iterative Closest Point** - for cloud registration using the ICP algorithm (warning: unstable!)
  
 Each node has the option of writing its output to a file:
@@ -37,6 +35,10 @@ Almost all launch files (with the exception of that for NURBS) provide a set of 
 corresponding node provides allowing testing with various parameters without the need to recompile the code. In addition 
 each node is almost completely encapsulated that is it provides a single functionality allowing a relatively flexible way 
 of maintaining the code base. Refer to the `CMakeLists.txt` for further details.
+
+**Important:** the package has low requirements on RAM however CPU performance is cruital. Especially the NURBS node exibits very 
+poor performance and requires a lot of time to generate a mesh. It is adviced that it is done offline (using the created 
+PCD files).
 
 Installation
 ============
