@@ -21,12 +21,14 @@ by the functionality it contains. Currently following processing nodes are inclu
  * **Normal estimation** - for calculating a cloud's normals (optional but encouraged: enable OpenMP)
  * **Surface smoothing** - for smoothing a cloud's surface (note: extensive testing pending)
  * **Mesh generators** - for generating a mesh from a cloud
+  
   * **Fast triangulation** - uses Greedy projection algorithm
   * **Poisson** - uses Poisson algorithm
   * **NURBS** - uses NURBS (warning: poor performance and incomplete launch file; the *on_nurbs* module is also currently unstable!)
+  
  * **Iterative Closest Point** - for cloud registration using the ICP algorithm (warning: unstable!)
  
- Each node has the option of writing its output to a file:
+Each node has the option of writing its output to a file:
  
   * For point clouds - use binary compressed PCD files
   * For meshes - use STL files
