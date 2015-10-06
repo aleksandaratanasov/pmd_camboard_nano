@@ -2,7 +2,7 @@ Overview
 ========
 
 This package provides a [ROS][] driver for [PMD[vision]® CamBoard nano][PMD]
-depth sensor.
+depth sensor plus a set of processing nodes for outlier removal, normal estimation and mesh generation.
 
 The driver is packaged as a nodelet, therefore it may be directly merged inside
 another ROS node to avoid unnecessary data copying. At the same time, it may be
@@ -13,6 +13,28 @@ corresponding topics.
 
 The `pmd_camboard_nano.launch` script (inspired by the [openni_launch][] stack
 in ROS) starts the driver nodelet along with the image rectification nodelets.
+
+Each launch file for a processing node starts with `pmd_camboard_nano_cloud_` followed 
+by the functionality it contains. Currently following processing nodes are included:
+
+ * **Statistical outlier removal** - for removing a cloud's outliers using the SOR filter
+ * **Normal estimation** - for calculating a cloud's normals (optional but encouraged: enable OpenMP)
+ * **Surface smoothing** - for smoothing a cloud's surface (note: extensive testing pending)
+ * **Mesh generators** - for generating a mesh from a cloud
+  * **Fast triangulation** - uses Greedy projection algorithm
+  * **Poisson** - uses Poisson algorithm
+  * **NURBS** - uses NURBS (warning: poor performance and incomplete launch file; the *on_nurbs* module is also currently unstable!)
+ * **Iterative Closest Point** - for cloud registration using the ICP algorithm (warning: unstable!)
+ 
+ Each node has the option of writing its output to a file:
+ 
+  * For point clouds - use binary compressed PCD files
+  * For meshes - use STL files
+  
+Almost all launch files (with the exception of that for NURBS) provide a set of parameters for the functionality that the 
+corresponding node provides allowing testing with various parameters without the need to recompile the code. In addition 
+each node is almost completely encapsulated that is it provides a single functionality allowing a relatively flexible way 
+of maintaining the code base. Refer to the `CMakeLists.txt` for further details.
 
 Installation
 ============
