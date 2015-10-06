@@ -34,7 +34,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - For the normals estimation and surface smoothing
-#include "config.h"
+//#include "config.h"
 #ifdef ENABLE_OPENMP
   #include <pcl/features/normal_3d_omp.h>
 #else
@@ -44,10 +44,6 @@
 // Misc
 #include <sstream>
 #include <string>
-
-// TODO Change this to produce a cloud with normals (nothing more!)
-// Source: http://pointclouds.org/documentation/tutorials/normal_estimation.php
-// Use pcl::NormalEstimationOMP()
 
 class CloudProcessingNodeNE
 {
@@ -79,9 +75,7 @@ public:
     pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) {
-    toggleWritingToFile = _toggle;
-  }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setSearchRadius(double _searchRadius)
   {

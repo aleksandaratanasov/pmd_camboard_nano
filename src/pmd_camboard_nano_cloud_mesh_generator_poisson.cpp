@@ -42,16 +42,12 @@
 #include <sstream>
 #include <string>
 
-// TODO Add poisson surface reconstruction - much better results (though careful - it creates water-tight meshes)
-// TODO Create one node per mesh generator. This will allow much more compact launch files
-
 class CloudProcessingNodeMGPSR
 {
   typedef pcl::PointXYZ Point;
 protected:
   ros::NodeHandle nh;
   ros::Subscriber sub;
-//  pcl_ros::Publisher<sensor_msgs::PointCloud2> pub;
 
 private:
   sensor_msgs::PointCloud2 cloud;
@@ -63,11 +59,10 @@ private:
   int depth;
 
 public:
-  CloudProcessingNodeMGPSR(std::string topicIn/*, std::string topicOut*/)
+  CloudProcessingNodeMGPSR(std::string topicIn)
     : fileIdx(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeMGPSR::subCallback, this);
-//    pub.advertise(nh, topicOut, 1);
   }
 
   ~CloudProcessingNodeMGPSR()
@@ -76,7 +71,7 @@ public:
 //    pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setDepth(int _depth) { depth = _depth; }
 
@@ -111,10 +106,6 @@ public:
       fileIdx++;
       ss.str("");
     }
-
-    /*sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*p, output);
-    pub.publish(output);*/
   }
 };
 
@@ -123,14 +114,13 @@ int main(int argc, char* argv[])
   ros::init (argc, argv, "cloud_mesh_generator_poisson");
   ros::NodeHandle nh("~");
   std::string topicIn = "points_ne";
-//  std::string topicOut = "points_mg";
   bool toggleWriteToFile;
   int depth;
 
   nh.param("write_to_file", toggleWriteToFile, false);
   nh.param("depth", depth, 10);
 
-  CloudProcessingNodeMGPSR c(topicIn/*, topicOut*/);
+  CloudProcessingNodeMGPSR c(topicIn);
   ROS_INFO_STREAM("Writing to files: " << (toggleWriteToFile ? "enabled" : "disabled") << "\n"
                   << "Depth: " << depth);
   c.setWritingToFile(toggleWriteToFile);

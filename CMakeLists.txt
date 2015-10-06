@@ -67,6 +67,10 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 # A cloud processing node receives point clouds either directly from the PMD publishing node (directly controlling
 # the PMD device) or from the cloud relay. Once a point cloud message is received, it is further processed
+
+# Processing node: statistical outlier removal
+# Input: cloud
+# Output: cloud with less/no outliers and NaN values
 message("Setting up binary for statistical outlier removal node")
 add_executable(${PROJECT_NAME}_cloud_statistical_outlier_removal src/pmd_camboard_nano_cloud_statistical_outlier_removal)
 target_link_libraries(${PROJECT_NAME}_cloud_statistical_outlier_removal ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_FILTERS_LIBRARIES})
@@ -81,15 +85,15 @@ if(ENABLE_OPENMP)
   if(CMAKE_COMPILER_IS_GNUCXX)
     # Add this to a more global scope if other parts of the source code can use OpenMP and not only the normals estimation
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-#    configure_file(config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
-    add_definitions(ENABLE_OPENMP)
+    configure_file(config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
+#    add_definitions(ENABLE_OPENMP)
     message("OpenMP enabled")
   else()
     message("Non-GCC compiler detected. Add routine for your compiler in CMakeLists.txt to check for OpenMP support.")
-#    configure_file(config_empty.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
+    configure_file(config_empty.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
   endif()
 else()
-#  configure_file(config_empty.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
+  configure_file(config_empty.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
   message("OpenMP disabled")
 endif()
 add_executable(${PROJECT_NAME}_cloud_normal_estimation src/pmd_camboard_nano_cloud_normal_estimation)
@@ -97,22 +101,21 @@ target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${PCL_COMMON_LIBRA
 target_link_libraries(${PROJECT_NAME}_cloud_normal_estimation ${catkin_LIBRARIES} boost_system pthread)
 
 # Processing node: iterative closest point
-# Input: cloud
-# Output: cloud (merged sequence of input clouds)
+# Input: cloud with normals
+# Output: cloud with normals (merged sequence of input clouds)
 message("Setting up binary for iterative closest point")
 add_executable(${PROJECT_NAME}_cloud_icp src/pmd_camboard_nano_cloud_icp.cpp)
 target_link_libraries(${PROJECT_NAME}_cloud_icp ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_REGISTRATION_LIBRARIES} ${PCL_SEARCH_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_icp ${catkin_LIBRARIES} boost_system pthread)
 
 # Processing node: surface smoothing
-# Input: cloud, normals
-# Output: cloud
+# Input: cloud
+# Output: reduced cloud with normals
 message("Setting up binary for surface smoothing and normal estimation node")
 add_executable(${PROJECT_NAME}_cloud_surface_smoothing src/pmd_camboard_nano_cloud_surface_smoothing)
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SURFACE_LIBRARIES} ${PCL_KDTREE_LIBRARIES} ${PCL_FILTERS_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_cloud_surface_smoothing ${catkin_LIBRARIES} boost_system pthread)
 
-# TODO one mesh generation procedure per node
 option(BUILD_WITH_NURBS "Build mesh generator with NURBS B-spline fitting (requires on_nurbs module)" OFF)
 option(BUILD_WITH_FAST_TRIANGULATION "Build mesh generator with fast triangulation" ON)
 option(BUILD_WITH_POISSON "Build mesh generator with Poisson surface reconstruction" ON)

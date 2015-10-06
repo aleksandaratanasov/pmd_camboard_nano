@@ -84,7 +84,7 @@ public:
 //    pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setSearchRadius(double _searchRadius) { searchRadius = _searchRadius; }
 

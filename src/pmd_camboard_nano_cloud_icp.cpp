@@ -83,6 +83,7 @@ private:
   bool toggleWritingToFile;
   unsigned int fillStatus;
   unsigned int capacity;
+  pcl::IterativeClosestPointWithNormals<pcl::PointNormal, pcl::PointNormal> reg;
   double maxCorrespondenceDistance;
   int maxIterations;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> *clouds;
@@ -95,13 +96,7 @@ private:
     point_representation.setRescaleValues(alpha);
 
     // Align
-    // TODO move IterativeClosestPointNonLinear object to a class member so that it won't be created all the time (settings are always the same so no need for that)
     ROS_INFO("Setting up non linear ICP");
-    pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> reg;
-    reg.setTransformationEpsilon(1e-6);
-    // Set the maximum distance between two correspondences in source and destination to 10cm
-    // TODO Move ICP's max correspondence distance to the launch file since it is based on the dataset
-    reg.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
     // Set the point presentation
     reg.setPointRepresentation(boost::make_shared<const CustomPointRepresentation>(point_representation));
     reg.setInputSource(src);
@@ -111,7 +106,7 @@ private:
     ROS_INFO("Running optimization for a single pair");
     Eigen::Matrix4f ti = Eigen::Matrix4f::Identity(), prev, targetToSource;
     pcl::PointCloud<pcl::PointNormal>::Ptr reg_result = src;
-    reg.setMaximumIterations(maxIterations); // TODO Move max iterations to launch file
+
 
     for(int i = 0; i < 30; ++i) { // See what this 30 is. Isn't his maxIterations?
       src = reg_result;
@@ -127,7 +122,7 @@ private:
       if (fabs((reg.getLastIncrementalTransformation() - prev).sum()) < reg.getTransformationEpsilon())
         reg.setMaxCorrespondenceDistance(reg.getMaxCorrespondenceDistance() - .001);
 
-      prev = reg.getLastIncrementalTransformation ();
+      prev = reg.getLastIncrementalTransformation();
     }
 
     // Get transformation from target to source
@@ -172,6 +167,10 @@ public:
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeICP::subCallback, this);
     pub.advertise(nh, topicOut, 1);
     clouds = new std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr>(capacity);
+    reg.setMaximumIterations(maxIterations);
+    reg.setTransformationEpsilon(1e-6);
+    // Set the maximum distance between two correspondences in source and destination to 10cm
+    reg.setMaxCorrespondenceDistance(maxCorrespondenceDistance);
   }
 
   ~CloudProcessingNodeICP()
@@ -180,7 +179,7 @@ public:
     delete clouds;
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setCapacity(unsigned int _capacity) {
     capacity = _capacity;

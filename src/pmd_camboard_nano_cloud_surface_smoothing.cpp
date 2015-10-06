@@ -73,7 +73,7 @@ public:
     pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setPolynomialFit(bool _polynomialFit) { polynomialFit = _polynomialFit; }
 
@@ -90,19 +90,9 @@ public:
     // Convert ROS message to PCL-compatible data structure
     ROS_INFO_STREAM("Received a cloud message with " << msg->height * msg->width << " points");
     ROS_INFO("Converting ROS cloud message to PCL compatible data structure");
-    pcl::PointCloud<pcl::PointNormal> pclCloud;
+    pcl::PointCloud<pcl::PointXYZ> pclCloud;
     pcl::fromROSMsg(*msg, pclCloud);
-    pcl::PointCloud<pcl::PointNormal>::Ptr p(new pcl::PointCloud<pcl::PointNormal>(pclCloud));
-
-    // Optional: write filtered cloud to a binary compressed PCD
-    /*if(toggleWritingToFile)
-    {
-      std::string path = "";
-      ss << path << "cloud_reduced_outliers_" << fileIdx << ".pcd";
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
-      fileIdx++;
-      ss.str("");
-    }
+    pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
     // TODO See if this node can be split into two - one for the normal estimation and another for the surface smoothing
     // The mesh generator node requires similar way of computing the normals so maybe there is a chance to make this process more flexible
@@ -114,7 +104,7 @@ public:
     pcl::PointCloud<pcl::PointNormal> mls_points;
     // Init object (second point type is for the normals, even if unused)
     pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
-    mls.setComputeNormals (true);
+    mls.setComputeNormals(true);
     // Set parameters
     mls.setInputCloud(p);//(FINAL_CLOUD_FULL_REGISTERED_FRAMES);
     mls.setPolynomialFit (false);
@@ -134,8 +124,8 @@ public:
     }
 
     sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*p, output);
-    pub.publish(output);*/
+    pcl::toROSMsg(mls_points, output);
+    pub.publish(output);
   }
 };
 

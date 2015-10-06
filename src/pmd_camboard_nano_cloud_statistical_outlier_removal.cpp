@@ -71,9 +71,7 @@ public:
     pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) {
-    toggleWritingToFile = _toggle;
-  }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void setMeanK(int _meanK)
   {

@@ -30,7 +30,7 @@
 // PCL
 // PCL - Misc
 #include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_lib_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - Mesh generation
@@ -49,7 +49,6 @@ class CloudProcessingNodeMGNURBS
 protected:
   ros::NodeHandle nh;
   ros::Subscriber sub;
-  pcl_ros::Publisher<sensor_msgs::PointCloud2> pub;
 
 private:
   sensor_msgs::PointCloud2 cloud;
@@ -59,7 +58,7 @@ private:
   std::ostringstream ss;
   bool toggleWritingToFile;
 
-  void PointCloud2Vector3d(pcl::PointCloud<Point>::Ptr cloud, pcl::on_nurbs::vector_vec3d &data)
+  void PointCloud2Vector3d(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::on_nurbs::vector_vec3d &data)
   {
     for (unsigned i = 0; i < cloud->size(); i++)
     {
@@ -70,20 +69,18 @@ private:
   }
 
 public:
-  CloudProcessingNodeMGNURBS(std::string topicIn, std::string topicOut)
+  CloudProcessingNodeMGNURBS(std::string topicIn)
     : fileIdx(0)
   {
     sub = nh.subscribe<sensor_msgs::PointCloud2>(topicIn, 5, &CloudProcessingNodeMGNURBS::subCallback, this);
-    pub.advertise(nh, topicOut, 1);
   }
 
   ~CloudProcessingNodeMGNURBS()
   {
     sub.shutdown();
-    pub.shutdown();
   }
 
-  void setWritingToFile(bool _toggle) { toggleWritingToFile = _toggle; }
+  void setWritingToFile(bool toggle) { toggleWritingToFile = toggle; }
 
   void subCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
   {
@@ -123,11 +120,11 @@ public:
     //  fit.setQuiet(false); // enable/disable debug output
 
     // Setup the mesh for the output
-    pcl::PolygonMesh mesh;
+    pcl::PolygonMesh::Ptr mesh(new pcl::PolygonMesh);
     pcl::PointCloud<pcl::PointXYZ>::Ptr mesh_cloud (new pcl::PointCloud<pcl::PointXYZ>);
     std::vector<pcl::Vertices> mesh_vertices;
     std::string mesh_id = "mesh_nurbs";
-    pcl::on_nurbs::Triangulation::convertSurface2PolygonMesh (fit.m_nurbs, mesh, mesh_resolution);
+    pcl::on_nurbs::Triangulation::convertSurface2PolygonMesh (fit.m_nurbs, *mesh, mesh_resolution);
 
     // Surface refinement
     for(unsigned i = 0; i < refinement; i++)
@@ -174,13 +171,11 @@ public:
     // curve_fit.setQuiet(false); // enable/disable debug output
     curve_fit.fitting(curve_params);
 
-    // ############################################################################
-    // triangulation of trimmed surface
+    // Triangulation of trimmed surface
+    ROS_INFO("Triangulating trimmed surface");
+    pcl::on_nurbs::Triangulation::convertTrimmedSurface2PolygonMesh(fit.m_nurbs, curve_fit.m_nurbs, *mesh, mesh_resolution);
 
-    printf ("  triangulate trimmed surface ...\n");
-    pcl::on_nurbs::Triangulation::convertTrimmedSurface2PolygonMesh(fit.m_nurbs, curve_fit.m_nurbs, mesh, mesh_resolution);
-
-    // save trimmed B-spline surface
+    // Save trimmed B-spline surface
     if(fit.m_nurbs.IsValid())
     {
       ONX_Model model;
@@ -196,20 +191,17 @@ public:
       curv.m_attributes.m_layer_index = 2;
       curv.m_attributes.m_name = "trimming curve";
     }
+    else return;
 
-    /*if(toggleWritingToFile)
+    if(toggleWritingToFile)
     {
       std::string path = "/home/redbaron/catkin_ws/src/pmd_camboard_nano/samples/temp/";
-      ss << path << "cloud_mesh_generator_nurbs_" << fileIdx << ".3dm"; // TODO Use some user-friendlier format for the mesh (3dm doesn't seem to be not that popular)
-      pcl::io::savePCDFileBinaryCompressed(ss.str(), *p);
+      ss << path << "cloud_mesh_generator_nurbs_" << fileIdx << ".stl";
+      pcl::io::savePolygonFileSTL(ss.str(), *mesh);
       ROS_INFO_STREAM("Writing to file \"" << ss.str() << "\"");
       fileIdx++;
       ss.str("");
-    }*/
-
-    sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*p, output);
-    pub.publish(output);
+    }
   }
 };
 
@@ -217,13 +209,12 @@ int main(int argc, char* argv[])
 {
   ros::init (argc, argv, "cloud_mesh_generator_nurbs");
   ros::NodeHandle nh("~");
-  std::string topicIn = "points_ssne";
-  std::string topicOut = "points_mg";
+  std::string topicIn = "points_sor";
   bool toggleWriteToFile;
 
   nh.param("write_to_file", toggleWriteToFile, false);
 
-  CloudProcessingNodeMGNURBS c(topicIn, topicOut);
+  CloudProcessingNodeMGNURBS c(topicIn);
   ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));
   c.setWritingToFile(toggleWriteToFile);
   //ROS_INFO_STREAM((polynomialFit ? "Enabling" : "Disabling") << " polynomial fit and setting search radius to " << searchRadius);

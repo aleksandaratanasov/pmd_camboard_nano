@@ -29,3 +29,9 @@ to remove those.
 -----------------------------------------------------------------------------
 VI. Optimization on compiler level
 Nice tips can be found here: https://wiki.wxwidgets.org/Reducing_Executable_Size
+------------------------------------------------------------------------------
+V. Adding passthrough filter - this can be used to cut off unwanted parts of 
+the capture data (example: cut off the arm and leave only the hand as an object of interest)
+------------------------------------------------------------------------------
+VI. Full build - run catkin_make with the following flags:
+-DENABLE_OPENMP=ON -DBUILD_WITH_NURBS=ON -DBUILD_WITH_FAST_TRIANGULATION=ON -DBUILD_WITH_POISSON=ON
