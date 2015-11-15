@@ -7,6 +7,29 @@
     <!-- Cloud handler -->
     <node pkg="pmd_camboard_nano" type="pmd_camboard_nano_cloud_mesh_generator_nurbs" name="cloud_mesh_generator_nurbs" output="screen">
           <param name="write_to_file" type="bool" value="true"/>
+          
+          <!-- Surface fitting parameters -->
+          <param name="order" type="int" value="3"/>
+          <param name="refinement" type="int" value="5"/>
+          <param name="iterations_sf" type="int" value="10"/>
+          <param name="mesh_res" type="int" value="64"/>
+          <param name="interior_smoothness" type="double" value="0.2"/>
+          <param name="interior_weight" type="double" value="1.0"/>
+          <param name="boundary_smoothness" type="double" value="0.2"/>
+          <param name="boundary_weight" type="double" value="0.0"/>
+          
+          <!-- Curve fitting parameters -->
+          <param name="cps_accuracy" type="double" value="5e-2"/> <!-- check if scientific notation can be parsed -->
+          <param name="cps_iterations" type="int" value="3"/>
+          <param name="cps_max" type="int" value="200"/>
+          <param name="accuracy" type="double" value="1e-3"/>
+          <param name="iterations_cf" type="int" value="100"/>
+          <param name="cp_res" type="int" value="0"/>
+          <param name="cp_weight" type="double" value="1.0"/>
+          <param name="cp_sigma2" type="double" value="0.1"/>
+          <param name="interior_sigma2" type="double" value="0.00001"/>
+          <param name="smooth_concavity" type="double" value="1.0"/>
+          <param name="smoothness" type="double" value="1.0"/>
     </node>
   </group>
 </launch>

@@ -34,7 +34,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 // PCL - For the normals estimation and surface smoothing
-//#include "config.h"
+#include "config.h"
 #ifdef ENABLE_OPENMP
   #include <pcl/features/normal_3d_omp.h>
 #else

@@ -43,6 +43,8 @@
 #include <sstream>
 #include <string>
 
+// TODO See how to make NURBS mesh generation support pcl::PointNormal clouds so that this node can be attached to the results of the normale estimation node
+
 class CloudProcessingNodeMGNURBS
 {
   typedef pcl::PointXYZ Point;
@@ -127,8 +129,10 @@ public:
     pcl::on_nurbs::Triangulation::convertSurface2PolygonMesh (fit.m_nurbs, *mesh, mesh_resolution);
 
     // Surface refinement
+    ROS_INFO("Surface refinement");
     for(unsigned i = 0; i < refinement; i++)
     {
+      ROS_INFO("Refinement %d", i);
       fit.refine(0);
       fit.refine(1);
       fit.assemble(params);
@@ -137,8 +141,10 @@ public:
     }
 
     // surface fitting with final refinement level
+    ROS_INFO("Surface fitting with final refinement level");
     for (unsigned i = 0; i < iterations; i++)
     {
+      ROS_INFO("Iteration %d", i);
       fit.assemble(params);
       fit.solve();
       pcl::on_nurbs::Triangulation::convertSurface2Vertices(fit.m_nurbs, mesh_cloud, mesh_vertices, mesh_resolution);
@@ -167,6 +173,7 @@ public:
     ON_NurbsCurve curve_nurbs = pcl::on_nurbs::FittingCurve2dAPDM::initNurbsCurve2D (order, curve_data.interior);
 
     // Curve fitting
+    ROS_INFO("Fit curve");
     pcl::on_nurbs::FittingCurve2dASDM curve_fit(&curve_data, curve_nurbs);
     // curve_fit.setQuiet(false); // enable/disable debug output
     curve_fit.fitting(curve_params);
@@ -191,7 +198,10 @@ public:
       curv.m_attributes.m_layer_index = 2;
       curv.m_attributes.m_name = "trimming curve";
     }
-    else return;
+    else {
+      ROS_WARNING("Produced invalid B-spline surface");
+      return;
+    }
 
     if(toggleWritingToFile)
     {
@@ -212,7 +222,37 @@ int main(int argc, char* argv[])
   std::string topicIn = "points_sor";
   bool toggleWriteToFile;
 
+  // Surface fitting parameters
+  int order, refinement, iterations_sf, mesh_res;
+  double interior_smoothness, interior_weight, boundary_smoothness, boundary_weight;
+
+  // Curve fitting parameters
+  int cps_iterations, cps_max, iterations_cf, cp_res;
+  double cps_accuracy, accuracy, cp_weight, cp_sigma2, interior_sigma2, smooth_concavity, smoothness;
+
   nh.param("write_to_file", toggleWriteToFile, false);
+
+  // TODO Add setters to the CloudProcessingNodeMGNURBS class
+  nh.param("order", order, 3);
+  nh.param("refinement", refinement, 5);
+  nh.param("iterations_sf", iterations_sf, 10);
+  nh.param("mesh_res", mesh_res, 256);
+  nh.param("interior_smoothness", interior_smoothness, .2);
+  nh.param("interior_weight", interior_weight, 1.);
+  nh.param("boundary_smoothness", boundary_smoothness, .2);
+  nh.param("boundary_weight", boundary_weight, 0.);
+
+  nh.param("cps_accuracy", cps_accuracy, 5e-2);
+  nh.param("cps_iterations", cps_iterations, 3);
+  nh.param("cps_max", cps_max, 200);
+  nh.param("accuracy", accuracy, 1e-3);
+  nh.param("iterations_cf", iterations_cf, 100);
+  nh.param("cp_res", cp_res, 0);
+  nh.param("cp_weight", cp_weight, 1.);
+  nh.param("cp_sigma2", cp_sigma2, .1);
+  nh.param("interior_sigma2", interior_sigma2, .00001);
+  nh.param("smooth_concavity", smooth_concavity, 1.);
+  nh.param("smoothness", smoothness, 1.);
 
   CloudProcessingNodeMGNURBS c(topicIn);
   ROS_INFO_STREAM("Writing to files " << (toggleWriteToFile ? "activated" : "deactivated"));

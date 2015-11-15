@@ -36,7 +36,7 @@ corresponding node provides allowing testing with various parameters without the
 each node is almost completely encapsulated that is it provides a single functionality allowing a relatively flexible way 
 of maintaining the code base. Refer to the `CMakeLists.txt` for further details.
 
-**Important:** the package has low requirements on RAM however CPU performance is cruital. Especially the NURBS node exibits very 
+**Important:** the package has low requirements on RAM however CPU performance is crucial. Especially the NURBS node exibits very 
 poor performance and requires a lot of time to generate a mesh. It is adviced that it is done offline (using the created 
 PCD files).
 

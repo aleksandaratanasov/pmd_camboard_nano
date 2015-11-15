@@ -6,8 +6,8 @@ project(pmd_camboard_nano)
 
 set(CMAKE_BUILD_TYPE Release)
 
-if(UNIX)
-  if(CMAKE_COMPILER_IS_GNUCXX)
+if(UNIX) # No need for this since ROS supports only Linux systems (for now)
+  if(CMAKE_COMPILER_IS_GNUCXX)  # See how clang is integrated with catkin_make and maybe add a case to handle it here
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x -s -O3 -g0")
     #-s (strip symbol table and relocation information - http://stackoverflow.com/questions/14175040/effects-of-removing-all-symbol-table-and-relocation-information-from-an-executab)
     #-O3 (level of optimization 3)

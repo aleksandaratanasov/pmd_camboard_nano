@@ -94,8 +94,6 @@ public:
     pcl::fromROSMsg(*msg, pclCloud);
     pcl::PointCloud<pcl::PointXYZ>::Ptr p(new pcl::PointCloud<pcl::PointXYZ>(pclCloud));
 
-    // TODO See if this node can be split into two - one for the normal estimation and another for the surface smoothing
-    // The mesh generator node requires similar way of computing the normals so maybe there is a chance to make this process more flexible
     // Source: http://pointclouds.org/documentation/tutorials/resampling.php
     // Estimate normals and apply smoothing at the end before the mesh generation
     // Creating the KD-tree
