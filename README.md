@@ -2,7 +2,7 @@ Overview
 ========
 
 This package provides a [ROS][] driver for [PMD[vision]® CamBoard nano][PMD]
-depth sensor plus a set of processing nodes for outlier removal, normal estimation and mesh generation.
+depth sensor plus a set of processing nodes for outlier removal, normal estimation and mesh generation from the data captured by the camboard.
 
 The driver is packaged as a nodelet, therefore it may be directly merged inside
 another ROS node to avoid unnecessary data copying. At the same time, it may be
@@ -172,10 +172,10 @@ PCL
 ===
 Installation
 ------------------
-The mesh generation node is build with NURBS B-Spline support, it requires the 
-**on_nurbs** module which are not included in the upstream PCL 1.7.2 due its 
-experimental nature. You have to build it PCL from source if you want to generate 
-meshes from the point clouds using NURBS.
+The mesh generation node is built with NURBS B-Spline support hence it requires the 
+**on_nurbs** module which is not included in the upstream PCL 1.7.2 due its 
+experimental nature. You have to build PCL from source if you want to generate 
+meshes from the point clouds using NURBS. Following list provides the stepts to building PCL:
 
  1. Clone PCL from github. It is advisable to use as closer version to the one 
  provided as upstream package and used by ROS as possible. On my system (Debian
@@ -192,12 +192,12 @@ meshes from the point clouds using NURBS.
  4. Use `sudo make install` or `sudo checkinstall make install` to install the new version.
  I recommend the second since it allows you uninstall the custom build much easier using `dpkg`
  instead of hunting down all the files (the case when using `make install` only)
- 5.(Optional but recommended) I strongly recommend removing the uninstall PCL from upstream and
+ 5.(Optional but recommended) I strongly recommend removing the PCL from upstream and
  use only the custom build. It is also better to rebuild the PCL-related ROS packages. This part 
  at least on my machine made me cry so be advised! The recommendation comes from the fact that 
  mixing different versions of the same library might give you severe headaches later on. The 
  easiest way to do that is by removing the PCL-related ROS packages, download the required sources 
- in a catkin workspace (see the ROS wiki to hunt down all those packages), build and install.
+ in a catkin workspace (see the ROS wiki to hunt down all those packages), build and install these.
  
 If NURBS is not enabled the mesh generator will use fast triangulation, which is faster but results
 in a mesh of lower quality.
